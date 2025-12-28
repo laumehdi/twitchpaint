@@ -2,20 +2,47 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Overlay Anti-Colisión</title>
+  <title>Overlay Anti-Colisión con Margen</title>
   <style>
-    body { margin: 0; background: transparent; overflow: hidden; width: 1920px; height: 1080px; }
-    #container { position: relative; width: 100%; height: 100%; }
+    body { 
+      margin: 0; 
+      background: transparent; 
+      overflow: hidden; 
+      width: 1920px; 
+      height: 1080px; 
+    }
+    #container { 
+      position: relative; 
+      width: 100%; 
+      height: 100%; 
+    }
     .item { 
-      position: absolute; top: 0px; 
-      display: flex; flex-direction: column; align-items: center; 
+      position: absolute; 
+      /* AJUSTE: Margen de 20px desde el techo */
+      top: 20px; 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
       will-change: transform;
     }
     .nick { 
-      color: white; font-family: sans-serif; font-weight: bold; text-shadow: 2px 2px 4px #000; 
-      margin-bottom: 2px; background: rgba(0,0,0,0.8); padding: 2px 8px; border-radius: 4px; font-size: 14px;
+      color: white; 
+      font-family: 'Segoe UI', sans-serif; 
+      font-weight: bold; 
+      text-shadow: 2px 2px 4px #000; 
+      margin-bottom: 4px; 
+      background: rgba(0,0,0,0.8); 
+      padding: 2px 10px; 
+      border-radius: 4px; 
+      font-size: 15px;
+      white-space: nowrap;
     }
-    .grid { display: grid; grid-template-columns: repeat(16, 12px); grid-template-rows: repeat(16, 12px); background: transparent; }
+    .grid { 
+      display: grid; 
+      grid-template-columns: repeat(16, 12px); 
+      grid-template-rows: repeat(16, 12px); 
+      background: transparent; 
+    }
     .px { width: 12px; height: 12px; }
   </style>
 </head>
@@ -26,7 +53,7 @@
     const colors = ['transparent','#000000','#aa0000','#00aa00','#aa5500','#0000aa','#aa00aa','#00aaaa','#aaaaaa','#555555','#ff5555','#55ff55','#ffff55','#5555ff','#ff55ff','#55ffff','#ffffff'];
     
     const speed = 2; 
-    const spacing = 250; // ESPACIO MÍNIMO entre dibujos (en píxeles)
+    const spacing = 280; // Distancia entre dibujos (un poco más para evitar roces)
     let drawings = [];
 
     function animate() {
@@ -34,7 +61,7 @@
         const d = drawings[i];
         d.x += speed;
         
-        // Loop infinito: si sale por la derecha, busca el último lugar de la fila
+        // Loop infinito con recolocación al final de la fila
         if (d.x > 1920) {
             let minX = 0;
             drawings.forEach(other => { if(other.x < minX) minX = other.x; });
@@ -99,19 +126,15 @@
         itemEl.appendChild(grid);
         document.getElementById('container').appendChild(itemEl);
 
-        // --- LÓGICA DE COLA SIN SUPERPOSICIÓN ---
-        let startX = -220; // Posición base (fuera a la izquierda)
-
+        // Posicionamiento en cola
+        let startX = -250; 
         if (drawings.length > 0) {
-            // Buscamos el dibujo que esté más atrás (el valor X más bajo)
             let minX = 0;
             drawings.forEach(d => { if(d.x < minX) minX = d.x; });
-            // Lo ponemos detrás de ese dibujo respetando el spacing
             startX = minX - spacing;
         }
 
         drawings.push({ el: itemEl, x: startX, user: user });
-
       } catch(err) {}
     }
 
