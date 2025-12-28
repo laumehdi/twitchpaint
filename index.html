@@ -2,109 +2,176 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Editor de Pixeles - Checkerboard</title>
+  <title>Editor de Pixeles - Ajuste Fino</title>
   <style>
-    :root { --bg-color: #f0f2f5; --text-color: #333; }
-    body { font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: var(--bg-color); color: var(--text-color); }
+    :root { 
+      --bg-color: #f0f2f5; 
+      --text-color: #333; 
+      --panel-bg: #ffffff;
+      --border-color: #ccc;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-color: #121212; 
+        --text-color: #e0e0e0; 
+        --panel-bg: #1e1e1e;
+        --border-color: #444;
+      }
+    }
+
+    body { 
+      font-family: 'Segoe UI', sans-serif; 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      justify-content: center; 
+      min-height: 100vh; 
+      margin: 0; 
+      background: var(--bg-color); 
+      color: var(--text-color);
+      overscroll-behavior: none; 
+      transition: background 0.3s ease;
+    }
     
     .grid-container { 
-      border: 4px solid #000; 
-      box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
-      margin-bottom: 20px; 
+      outline: 4px solid #000;
+      margin-bottom: 25px; 
       line-height: 0;
-      background-color: #fff;
+      touch-action: none; 
+      width: 400px;
+      height: 400px;
+      background: white;
     }
 
     #grid { 
       display: grid; 
       grid-template-columns: repeat(16, 25px); 
       grid-template-rows: repeat(16, 25px); 
-      /* PATRÓN AJEDREZ CLÁSICO (Checkerboard) */
-      background-color: #ffffff;
-      background-image: 
-        linear-gradient(45deg, #eee 25%, transparent 25%), 
-        linear-gradient(-45deg, #eee 25%, transparent 25%), 
-        linear-gradient(45deg, transparent 75%, #eee 75%), 
-        linear-gradient(-45deg, transparent 75%, #eee 75%);
-      background-size: 20px 20px; /* Tamaño de los cuadraditos del fondo */
-      background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+      width: 400px;
+      height: 400px;
     }
 
     .cell { 
       width: 25px; 
       height: 25px; 
-      cursor: crosshair; 
       box-sizing: border-box;
-      /* Línea sutil gris suave entre pixeles */
-      border: 0.5px solid rgba(0, 0, 0, 0.05); 
+      cursor: crosshair;
+      background-color: #ffffff;
+      /* AJEDREZ NIVEL MEDIO: 4 cuadros por píxel */
+      background-image: 
+        linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%, #eee), 
+        linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%, #eee);
+      background-size: 25px 25px; /* Tamaño total del patrón */
+      background-position: 0 0, 12.5px 12.5px; /* Desfase a la mitad exacta */
+      border: 0.1px solid rgba(0,0,0,0.05);
     }
 
-    .palette { display: flex; gap: 6px; flex-wrap: wrap; width: 360px; justify-content: center; margin-bottom: 20px; padding: 10px; background: rgba(0,0,0,0.05); border-radius: 12px; }
-    .p-color { width: 32px; height: 32px; cursor: pointer; border: 2px solid transparent; border-radius: 8px; }
-    .p-color.selected { border-color: #000; transform: scale(1.1); }
+    .palette { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; max-width: 420px; margin-bottom: 25px; }
+    .swatch { width: 38px; height: 38px; border-radius: 6px; cursor: pointer; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: transform 0.1s; }
+    .swatch.selected { border-color: #9146ff; transform: scale(1.15); z-index: 10; box-shadow: 0 0 12px rgba(145, 70, 255, 0.6); }
     
-    .p-transparent { background: white !important; position: relative; border: 1px solid #ccc; overflow: hidden;}
-    .p-transparent::after { content: ''; position: absolute; width: 140%; height: 2px; background: red; transform: rotate(45deg); top: 14px; left: -5px; }
-    
-    button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 8px; font-weight: bold; color: white; margin: 5px; }
-    .btn-generate { background: #9146ff; }
-    .btn-clear { background: #ff4646; }
-    
-    #output { width: 450px; padding: 15px; border: 2px solid #000; border-radius: 10px; text-align: center; font-family: monospace; cursor: pointer; background: white; transition: all 0.2s; }
-    .copied-success { background: #d4ffda !important; border-color: #27ae60 !important; color: #1e8449 !important; }
+    .swatch-transparent {
+      background-image: linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%), 
+                        linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%);
+      background-size: 10px 10px;
+      background-position: 0 0, 5px 5px;
+      background-color: white;
+    }
+
+    .controls { display: flex; gap: 15px; margin-bottom: 25px; }
+    button { padding: 12px 28px; font-size: 16px; cursor: pointer; border: none; border-radius: 8px; background: #9146ff; color: #fff; font-weight: bold; }
+    button.clear { background: #dc3545; }
+
+    #output { 
+      width: 85%; 
+      max-width: 500px; 
+      padding: 15px; 
+      font-family: 'Consolas', monospace; 
+      font-size: 14px; 
+      border: 2px solid var(--border-color); 
+      border-radius: 12px; 
+      background: var(--panel-bg); 
+      color: var(--text-color);
+      text-align: center; 
+      cursor: pointer;
+    }
+    .copied-flash { background-color: #28a745 !important; color: white !important; border-color: #28a745 !important; }
   </style>
 </head>
 <body>
-  <div class="grid-container"><div id="grid"></div></div>
-  <div class="palette" id="palette"></div>
-  <div>
-    <button class="btn-clear" onclick="clearCanvas()">Limpiar</button>
-    <button class="btn-generate" onclick="generateCode()">Generar</button>
+
+  <div class="grid-container">
+    <div id="grid"></div>
   </div>
-  <input type="text" id="output" readonly onclick="copyToClipboard()" placeholder="Haz clic para copiar">
+
+  <div class="palette" id="palette"></div>
+
+  <div class="controls">
+    <button onclick="clearCanvas()" class="clear">Borrar</button>
+    <button onclick="generateCode()">Generar Código</button>
+  </div>
+
+  <input type="text" id="output" readonly onclick="copyToClipboard()" placeholder="El código aparecerá aquí">
 
   <script>
     const colors = ['transparent','#000000','#aa0000','#00aa00','#aa5500','#0000aa','#aa00aa','#00aaaa','#aaaaaa','#555555','#ff5555','#55ff55','#ffff55','#5555ff','#ff55ff','#55ffff','#ffffff'];
-    let selectedIdx = 1;
+    let selectedIdx = 1; 
     let isDrawing = false;
-    const cells = [];
+
     const grid = document.getElementById('grid');
+    const cells = [];
 
     for (let i = 0; i < 256; i++) {
       const cell = document.createElement('div');
       cell.className = 'cell';
       cell.dataset.idx = "0";
-      cell.onmousedown = (e) => { isDrawing = true; paint(cell); e.preventDefault(); };
-      cell.onmouseenter = () => { if (isDrawing) paint(cell); };
+      
+      cell.addEventListener('mousedown', (e) => { isDrawing = true; paint(cell); e.preventDefault(); });
+      cell.addEventListener('mouseover', () => { if(isDrawing) paint(cell); });
+      cell.addEventListener('touchstart', (e) => { isDrawing = true; paint(cell); e.preventDefault(); }, {passive: false});
+
       grid.appendChild(cell);
       cells.push(cell);
     }
-    window.onmouseup = () => isDrawing = false;
 
-    const pal = document.getElementById('palette');
-    colors.forEach((c, i) => {
-      const b = document.createElement('div');
-      b.className = 'p-color' + (i === 0 ? ' p-transparent' : '');
-      if (i > 0) b.style.backgroundColor = c;
-      if (i === selectedIdx) b.classList.add('selected');
-      b.onclick = () => {
-        selectedIdx = i;
-        document.querySelectorAll('.p-color').forEach(x => x.classList.remove('selected'));
-        b.classList.add('selected');
-      };
-      pal.appendChild(b);
-    });
+    grid.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const element = document.elementFromPoint(touch.clientX, touch.clientY);
+      if (element && element.classList.contains('cell')) paint(element);
+    }, {passive: false});
+
+    window.addEventListener('mouseup', () => isDrawing = false);
+    window.addEventListener('touchend', () => isDrawing = false);
 
     function paint(cell) {
       cell.dataset.idx = selectedIdx;
       cell.style.backgroundColor = selectedIdx === 0 ? 'transparent' : colors[selectedIdx];
+      cell.style.backgroundImage = selectedIdx === 0 ? '' : 'none';
     }
 
+    const palette = document.getElementById('palette');
+    colors.forEach((color, idx) => {
+      const swatch = document.createElement('div');
+      swatch.className = 'swatch' + (idx === selectedIdx ? ' selected' : '');
+      if(color === 'transparent') swatch.classList.add('swatch-transparent');
+      else swatch.style.backgroundColor = color;
+      
+      swatch.onclick = () => {
+        document.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
+        swatch.classList.add('selected');
+        selectedIdx = idx;
+      };
+      palette.appendChild(swatch);
+    });
+
     function clearCanvas() {
-      if(confirm("¿Borrar dibujo?")) {
+      if(confirm("¿Borrar todo el dibujo?")) {
         cells.forEach(c => { 
           c.dataset.idx = "0"; 
           c.style.backgroundColor = "transparent"; 
+          c.style.backgroundImage = '';
         });
         document.getElementById('output').value = "";
       }
@@ -128,15 +195,15 @@
       const out = document.getElementById('output');
       if (!out.value || out.value === "¡Copiado!") return;
       try {
-        await navigator.clipboard.writeText(out.value);
-        const oldVal = out.value;
-        out.classList.add('copied-success');
+        const originalValue = out.value;
+        await navigator.clipboard.writeText(originalValue);
         out.value = "¡Copiado!";
-        setTimeout(() => { 
-          out.classList.remove('copied-success'); 
-          out.value = oldVal; 
-        }, 1000);
-      } catch (err) { out.select(); document.execCommand('copy'); }
+        out.classList.add('copied-flash');
+        setTimeout(() => {
+          out.value = originalValue;
+          out.classList.remove('copied-flash');
+        }, 1200);
+      } catch(err) {}
     }
   </script>
 </body>
