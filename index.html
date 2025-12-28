@@ -2,113 +2,78 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Editor de Pixeles - Ajuste Fino</title>
+  <title>Editor de Pixeles Pro - mksh</title>
   <style>
-    :root { 
-      --bg-color: #f0f2f5; 
-      --text-color: #333; 
-      --panel-bg: #ffffff;
-      --border-color: #ccc;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg-color: #121212; 
-        --text-color: #e0e0e0; 
-        --panel-bg: #1e1e1e;
-        --border-color: #444;
-      }
-    }
-
-    body { 
-      font-family: 'Segoe UI', sans-serif; 
-      display: flex; 
-      flex-direction: column; 
-      align-items: center; 
-      justify-content: center; 
-      min-height: 100vh; 
+    :root { --bg-color: #f0f2f5; --text-color: #333; --panel-bg: #ffffff; --border-color: #ccc; --twitch-color: #9146ff; }
+    @media (prefers-color-scheme: dark) { :root { --bg-color: #121212; --text-color: #e0e0e0; --panel-bg: #1e1e1e; --border-color: #444; } }
+    
+    body { font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: var(--bg-color); color: var(--text-color); overscroll-behavior: none; user-select: none; }
+    
+    /* Título con Enlace Clickeable */
+    .header-info { text-align: center; margin-bottom: 15px; }
+    .header-info a { 
       margin: 0; 
-      background: var(--bg-color); 
-      color: var(--text-color);
-      overscroll-behavior: none; 
-      transition: background 0.3s ease;
+      font-size: 26px; 
+      color: var(--twitch-color); 
+      text-decoration: none; 
+      font-weight: bold;
+      transition: opacity 0.2s;
     }
+    .header-info a:hover { opacity: 0.8; text-decoration: underline; }
+    .header-info p { margin: 5px 0 0 0; font-weight: bold; font-size: 14px; letter-spacing: 1px; opacity: 0.8; }
+
+    .grid-container { outline: 4px solid #000; margin-bottom: 20px; line-height: 0; touch-action: none; width: 400px; height: 400px; background: white; -webkit-user-drag: none; }
+    #grid { display: grid; grid-template-columns: repeat(16, 25px); grid-template-rows: repeat(16, 25px); width: 400px; height: 400px; }
     
-    .grid-container { 
-      outline: 4px solid #000;
-      margin-bottom: 25px; 
-      line-height: 0;
-      touch-action: none; 
-      width: 400px;
-      height: 400px;
-      background: white;
-    }
-
-    #grid { 
-      display: grid; 
-      grid-template-columns: repeat(16, 25px); 
-      grid-template-rows: repeat(16, 25px); 
-      width: 400px;
-      height: 400px;
-    }
-
-    .cell { 
-      width: 25px; 
-      height: 25px; 
-      box-sizing: border-box;
-      cursor: crosshair;
-      background-color: #ffffff;
-      /* AJEDREZ NIVEL MEDIO: 4 cuadros por píxel */
-      background-image: 
-        linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%, #eee), 
-        linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%, #eee);
-      background-size: 25px 25px; /* Tamaño total del patrón */
-      background-position: 0 0, 12.5px 12.5px; /* Desfase a la mitad exacta */
-      border: 0.1px solid rgba(0,0,0,0.05);
-    }
-
-    .palette { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; max-width: 420px; margin-bottom: 25px; }
-    .swatch { width: 38px; height: 38px; border-radius: 6px; cursor: pointer; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: transform 0.1s; }
-    .swatch.selected { border-color: #9146ff; transform: scale(1.15); z-index: 10; box-shadow: 0 0 12px rgba(145, 70, 255, 0.6); }
+    .cell { width: 25px; height: 25px; box-sizing: border-box; cursor: crosshair; background-color: #fff; background-image: linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%, #eee), linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%, #eee); background-size: 20px 20px; background-position: 0 0, 10px 10px; border: 0.1px solid rgba(0,0,0,0.05); -webkit-user-drag: none; }
     
-    .swatch-transparent {
-      background-image: linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%), 
-                        linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%);
-      background-size: 10px 10px;
-      background-position: 0 0, 5px 5px;
-      background-color: white;
-    }
-
-    .controls { display: flex; gap: 15px; margin-bottom: 25px; }
-    button { padding: 12px 28px; font-size: 16px; cursor: pointer; border: none; border-radius: 8px; background: #9146ff; color: #fff; font-weight: bold; }
-    button.clear { background: #dc3545; }
+    .palette { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; max-width: 420px; margin-bottom: 20px; }
+    .swatch { width: 35px; height: 35px; border-radius: 6px; cursor: pointer; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+    .swatch.selected { border-color: var(--twitch-color); transform: scale(1.1); }
+    .swatch-transparent { background-image: linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%), linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%); background-size: 8px 8px; background-position: 0 0, 4px 4px; background-color: white; }
+    
+    .controls { display: flex; gap: 10px; margin-bottom: 20px; }
+    button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 5px; background: var(--twitch-color); color: #fff; font-weight: bold; transition: transform 0.1s; }
+    button:active { transform: scale(0.95); }
 
     #output { 
-      width: 85%; 
+      width: 90%; 
       max-width: 500px; 
       padding: 15px; 
-      font-family: 'Consolas', monospace; 
-      font-size: 14px; 
+      font-family: monospace; 
       border: 2px solid var(--border-color); 
-      border-radius: 12px; 
+      border-radius: 8px; 
       background: var(--panel-bg); 
-      color: var(--text-color);
+      color: var(--text-color); 
       text-align: center; 
       cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: bold;
+      outline: none;
     }
-    .copied-flash { background-color: #28a745 !important; color: white !important; border-color: #28a745 !important; }
+
+    #output.copied {
+      background-color: #28a745 !important;
+      color: white !important;
+      border-color: #1e7e34 !important;
+    }
   </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
 
-  <div class="grid-container">
-    <div id="grid"></div>
+  <div class="header-info">
+    <a href="https://twitch.tv/laumehdi" target="_blank">https://twitch.tv/laumehdi</a>
+    <p>DIBUJÁ Y COPIALO EN EL CHAT</p>
+  </div>
+
+  <div class="grid-container" draggable="false">
+    <div id="grid" draggable="false"></div>
   </div>
 
   <div class="palette" id="palette"></div>
 
   <div class="controls">
-    <button onclick="clearCanvas()" class="clear">Borrar</button>
+    <button onclick="clearCanvas()" style="background:#dc3545">Borrar Todo</button>
     <button onclick="generateCode()">Generar Código</button>
   </div>
 
@@ -116,34 +81,19 @@
 
   <script>
     const colors = ['transparent','#000000','#aa0000','#00aa00','#aa5500','#0000aa','#aa00aa','#00aaaa','#aaaaaa','#555555','#ff5555','#55ff55','#ffff55','#5555ff','#ff55ff','#55ffff','#ffffff'];
-    let selectedIdx = 1; 
-    let isDrawing = false;
-
-    const grid = document.getElementById('grid');
-    const cells = [];
+    let selectedIdx = 1, isDrawing = false;
+    const grid = document.getElementById('grid'), cells = [];
 
     for (let i = 0; i < 256; i++) {
       const cell = document.createElement('div');
-      cell.className = 'cell';
-      cell.dataset.idx = "0";
-      
-      cell.addEventListener('mousedown', (e) => { isDrawing = true; paint(cell); e.preventDefault(); });
-      cell.addEventListener('mouseover', () => { if(isDrawing) paint(cell); });
-      cell.addEventListener('touchstart', (e) => { isDrawing = true; paint(cell); e.preventDefault(); }, {passive: false});
-
-      grid.appendChild(cell);
-      cells.push(cell);
+      cell.className = 'cell'; cell.dataset.idx = "0";
+      cell.setAttribute('draggable', 'false');
+      cell.onmousedown = (e) => { if(e.button === 0) { isDrawing = true; paint(cell); } };
+      cell.onmouseover = () => { if(isDrawing) paint(cell); };
+      grid.appendChild(cell); cells.push(cell);
     }
-
-    grid.addEventListener('touchmove', (e) => {
-      e.preventDefault();
-      const touch = e.touches[0];
-      const element = document.elementFromPoint(touch.clientX, touch.clientY);
-      if (element && element.classList.contains('cell')) paint(element);
-    }, {passive: false});
-
-    window.addEventListener('mouseup', () => isDrawing = false);
-    window.addEventListener('touchend', () => isDrawing = false);
+    window.onmouseup = () => isDrawing = false;
+    grid.addEventListener('dragstart', (e) => e.preventDefault());
 
     function paint(cell) {
       cell.dataset.idx = selectedIdx;
@@ -157,53 +107,56 @@
       swatch.className = 'swatch' + (idx === selectedIdx ? ' selected' : '');
       if(color === 'transparent') swatch.classList.add('swatch-transparent');
       else swatch.style.backgroundColor = color;
-      
       swatch.onclick = () => {
         document.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
-        swatch.classList.add('selected');
-        selectedIdx = idx;
+        swatch.classList.add('selected'); selectedIdx = idx;
       };
       palette.appendChild(swatch);
     });
 
-    function clearCanvas() {
-      if(confirm("¿Borrar todo el dibujo?")) {
-        cells.forEach(c => { 
-          c.dataset.idx = "0"; 
-          c.style.backgroundColor = "transparent"; 
-          c.style.backgroundImage = '';
-        });
-        document.getElementById('output').value = "";
-      }
-    }
-
     function generateCode() {
       const pixelData = cells.map(c => parseInt(c.dataset.idx));
       const usedColors = [...new Set(pixelData)].sort((a,b) => a-b);
-      const buffer = new Uint8Array(128);
-      for (let i = 0; i < 256; i += 2) {
-        const high = usedColors.indexOf(pixelData[i]);
-        const low = usedColors.indexOf(pixelData[i+1]);
-        buffer[i/2] = (high << 4) | (low & 0x0F);
-      }
-      const b64 = btoa(String.fromCharCode(...buffer));
       const header = usedColors.map(c => c.toString(16)).join('');
-      document.getElementById('output').value = "!dibujar " + header + "_" + b64;
+      let compressed = "";
+      for (let i = 0; i < pixelData.length; i++) {
+        let count = 1;
+        const currentIdx = usedColors.indexOf(pixelData[i]);
+        while (i + 1 < pixelData.length && usedColors.indexOf(pixelData[i+1]) === currentIdx && count < 35) {
+          count++; i++;
+        }
+        compressed += currentIdx.toString(16) + count.toString(36);
+      }
+      document.getElementById('output').value = "!dibujar " + header + "_" + compressed;
+      document.getElementById('output').classList.remove('copied');
     }
 
-    async function copyToClipboard() {
+    function clearCanvas() { 
+      if(confirm("¿Borrar dibujo?")) {
+        cells.forEach(c => { c.dataset.idx="0"; c.style.backgroundColor="transparent"; c.style.backgroundImage=''; });
+        document.getElementById('output').value = "";
+        document.getElementById('output').classList.remove('copied');
+      }
+    }
+
+    async function copyToClipboard() { 
       const out = document.getElementById('output');
-      if (!out.value || out.value === "¡Copiado!") return;
+      if(!out.value || out.value === "¡COPIADO!") return;
+
       try {
-        const originalValue = out.value;
-        await navigator.clipboard.writeText(originalValue);
-        out.value = "¡Copiado!";
-        out.classList.add('copied-flash');
+        const textToCopy = out.value;
+        await navigator.clipboard.writeText(textToCopy);
+        
+        out.value = "¡COPIADO!";
+        out.classList.add('copied');
+
         setTimeout(() => {
-          out.value = originalValue;
-          out.classList.remove('copied-flash');
+          out.value = textToCopy;
+          out.classList.remove('copied');
         }, 1200);
-      } catch(err) {}
+      } catch (err) {
+        console.error('Error al copiar: ', err);
+      }
     }
   </script>
 </body>
