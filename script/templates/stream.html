@@ -2,14 +2,13 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Pixel Art Stream Overlay</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
   <style>
-    body { margin: 0; overflow: hidden; background: transparent; font-family: 'Segoe UI', sans-serif; width: 1920px; height: 1080px; }
-    #marquee { display: flex; position: absolute; white-space: nowrap; will-change: transform; animation: scroll-right 22s linear infinite; align-items: flex-end; bottom: 20px; }
-    @keyframes scroll-right { 0% { transform: translateX(-100%); } 100% { transform: translateX(1920px); } }
-    .item { display: inline-flex; flex-direction: column; align-items: center; margin-right: 40px; }
-    .nick { color: #ffffff; font-weight: bold; font-size: 18px; text-shadow: 2px 2px 0 #000; margin-bottom: 5px; background: rgba(0, 0, 0, 0.5); padding: 1px 8px; border-radius: 4px; }
+    body { margin: 0; background: transparent; overflow: hidden; width: 1920px; height: 1080px; }
+    #marquee { display: flex; position: absolute; bottom: 30px; animation: scroll 22s linear infinite; align-items: flex-end; }
+    @keyframes scroll { 0% { transform: translateX(-100%); } 100% { transform: translateX(1920px); } }
+    .item { margin-right: 50px; display: flex; flex-direction: column; align-items: center; }
+    .nick { color: white; font-family: sans-serif; font-weight: bold; text-shadow: 2px 2px black; margin-bottom: 5px; background: rgba(0,0,0,0.5); padding: 2px 10px; border-radius: 5px; }
     .grid { display: grid; grid-template-columns: repeat(16, 12px); grid-template-rows: repeat(16, 12px); }
     .px { width: 12px; height: 12px; }
   </style>
@@ -18,50 +17,46 @@
   <div id="marquee"></div>
   <script>
     const socket = io();
-    const marquee = document.getElementById('marquee');
     const colors = ['transparent','#000000','#aa0000','#00aa00','#aa5500','#0000aa','#aa00aa','#00aaaa','#aaaaaa','#555555','#ff5555','#55ff55','#ffff55','#5555ff','#ff55ff','#55ffff','#ffffff'];
 
     socket.on('new_drawing', function(data) {
       const container = document.createElement('div');
       container.className = 'item';
-      container.dataset.user = data.user.toLowerCase();
-      
-      const nickTag = document.createElement('div');
-      nickTag.className = 'nick';
-      nickTag.innerText = data.user;
-      
       const grid = document.createElement('div');
       grid.className = 'grid';
 
-      // DESCOMPRESIÓN RLE: Lee 1 hex de color y 2 hex de cantidad
-      let fullCode = "";
-      for (let i = 0; i < data.code.length; i += 3) {
-        let colorChar = data.code[i];
-        let countHex = data.code.substring(i + 1, i + 3);
-        let count = parseInt(countHex, 16);
-        fullCode += colorChar.repeat(count);
+      let pixels = [];
+      const code = data.code;
+      for (let i = 0; i < code.length; i += 3) {
+        let colorIdx = parseInt(code[i], 16);
+        let count = parseInt(code.substring(i + 1, i + 3), 16);
+        if (!isNaN(colorIdx) && !isNaN(count)) {
+          for (let j = 0; j < count; j++) {
+            if (pixels.length < 256) pixels.push(colorIdx);
+          }
+        }
       }
+      while(pixels.length < 256) pixels.push(0);
 
-      for (let i = 0; i < 256; i++) {
-        let colorIdx = parseInt(fullCode[i] || "0", 16);
+      pixels.forEach(idx => {
         const px = document.createElement('div');
         px.className = 'px';
-        px.style.backgroundColor = colors[colorIdx] || 'transparent';
+        px.style.backgroundColor = colors[idx] || 'transparent';
         grid.appendChild(px);
-      }
-      
-      container.appendChild(nickTag);
+      });
+
+      container.innerHTML = `<div class="nick">${data.user}</div>`;
       container.appendChild(grid);
-      marquee.appendChild(container);
+      document.getElementById('marquee').appendChild(container);
       setTimeout(() => container.remove(), 300000);
     });
 
     socket.on('mod_action', function(data) {
-      const items = document.querySelectorAll('.item');
+      if (data.type === 'clear_all') document.getElementById('marquee').innerHTML = '';
       if (data.type === 'delete_user') {
-        items.forEach(item => { if (item.dataset.user === data.target) item.remove(); });
-      } else if (data.type === 'clear_all') {
-        marquee.innerHTML = '';
+        document.querySelectorAll('.item').forEach(el => {
+          if (el.innerText.toLowerCase().includes(data.target)) el.remove();
+        });
       }
     });
   </script>
