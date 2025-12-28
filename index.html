@@ -9,7 +9,6 @@
     
     body { font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: var(--bg-color); color: var(--text-color); overscroll-behavior: none; user-select: none; }
     
-    /* Título con Enlace Clickeable */
     .header-info { text-align: center; margin-bottom: 15px; }
     .header-info a { 
       margin: 0; 
@@ -22,7 +21,17 @@
     .header-info a:hover { opacity: 0.8; text-decoration: underline; }
     .header-info p { margin: 5px 0 0 0; font-weight: bold; font-size: 14px; letter-spacing: 1px; opacity: 0.8; }
 
-    .grid-container { outline: 4px solid #000; margin-bottom: 20px; line-height: 0; touch-action: none; width: 400px; height: 400px; background: white; -webkit-user-drag: none; }
+    /* touch-action: none es vital para que el móvil no haga scroll al dibujar */
+    .grid-container { 
+      outline: 4px solid #000; 
+      margin-bottom: 20px; 
+      line-height: 0; 
+      touch-action: none; 
+      width: 400px; 
+      height: 400px; 
+      background: white; 
+      -webkit-user-drag: none; 
+    }
     #grid { display: grid; grid-template-columns: repeat(16, 25px); grid-template-rows: repeat(16, 25px); width: 400px; height: 400px; }
     
     .cell { width: 25px; height: 25px; box-sizing: border-box; cursor: crosshair; background-color: #fff; background-image: linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%, #eee), linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%, #eee); background-size: 20px 20px; background-position: 0 0, 10px 10px; border: 0.1px solid rgba(0,0,0,0.05); -webkit-user-drag: none; }
@@ -84,16 +93,47 @@
     let selectedIdx = 1, isDrawing = false;
     const grid = document.getElementById('grid'), cells = [];
 
+    // Inicializar Grilla
     for (let i = 0; i < 256; i++) {
       const cell = document.createElement('div');
       cell.className = 'cell'; cell.dataset.idx = "0";
       cell.setAttribute('draggable', 'false');
+      
+      // Eventos Mouse
       cell.onmousedown = (e) => { if(e.button === 0) { isDrawing = true; paint(cell); } };
       cell.onmouseover = () => { if(isDrawing) paint(cell); };
+      
       grid.appendChild(cell); cells.push(cell);
     }
+
+    // Manejo Global de Mouse
     window.onmouseup = () => isDrawing = false;
     grid.addEventListener('dragstart', (e) => e.preventDefault());
+
+    // --- SOPORTE TÁCTIL (CELULARES) ---
+    grid.addEventListener('touchstart', (e) => {
+      isDrawing = true;
+      handleTouch(e);
+      e.preventDefault(); 
+    }, { passive: false });
+
+    grid.addEventListener('touchmove', (e) => {
+      if (isDrawing) handleTouch(e);
+      e.preventDefault();
+    }, { passive: false });
+
+    grid.addEventListener('touchend', () => {
+      isDrawing = false;
+    });
+
+    function handleTouch(e) {
+      const touch = e.touches[0];
+      // Obtiene el elemento bajo el dedo usando coordenadas
+      const target = document.elementFromPoint(touch.clientX, touch.clientY);
+      if (target && target.classList.contains('cell')) {
+        paint(target);
+      }
+    }
 
     function paint(cell) {
       cell.dataset.idx = selectedIdx;
@@ -101,6 +141,7 @@
       cell.style.backgroundImage = selectedIdx === 0 ? '' : 'none';
     }
 
+    // Inicializar Paleta
     const palette = document.getElementById('palette');
     colors.forEach((color, idx) => {
       const swatch = document.createElement('div');
