@@ -2,16 +2,13 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Overlay Infinito Corregido</title>
+  <title>Overlay con Comandos</title>
   <style>
     body { margin: 0; background: transparent; overflow: hidden; width: 1920px; height: 1080px; }
     #container { position: relative; width: 100%; height: 100%; }
     .item { 
-      position: absolute; 
-      top: 0px; 
-      display: flex; 
-      flex-direction: column; 
-      align-items: center; 
+      position: absolute; top: 0px; 
+      display: flex; flex-direction: column; align-items: center; 
       will-change: transform;
     }
     .nick { 
@@ -26,11 +23,10 @@
   <div id="container"></div>
   <script>
     const CHANNEL = 'laumehdi'; 
-    // Paleta exacta de 17 colores (0-16)
     const colors = ['transparent','#000000','#aa0000','#00aa00','#aa5500','#0000aa','#aa00aa','#00aaaa','#aaaaaa','#555555','#ff5555','#55ff55','#ffff55','#5555ff','#ff55ff','#55ffff','#ffffff'];
     
     const speed = 2; 
-    const drawings = [];
+    let drawings = []; // Cambiado a 'let' para poder vaciarla con !limpiar
 
     function animate() {
       for (let i = drawings.length - 1; i >= 0; i--) {
@@ -55,44 +51,47 @@
       const parts = e.data.split('PRIVMSG #' + CHANNEL + ' :');
       if (parts.length > 1) {
         const msg = parts[1].trim();
-        const user = e.data.split('!')[0].substring(1);
-        if (msg.startsWith('!dibujar ')) createDrawing(user, msg.split(' ')[1]);
+        const user = e.data.split('!')[0].substring(1).toLowerCase();
+
+        // COMANDO: !dibujar
+        if (msg.startsWith('!dibujar ')) {
+          createDrawing(user, msg.split(' ')[1]);
+        } 
+        // COMANDO: !borrar <usuario>
+        else if (msg.startsWith('!borrar ')) {
+          const targetUser = msg.replace('!borrar ', '').replace('@', '').trim().toLowerCase();
+          removeUserDrawings(targetUser);
+        }
+        // COMANDO: !limpiar (solo tú o tus mods deberían poder, pero aquí es abierto)
+        else if (msg === '!limpiar') {
+          clearAllDrawings();
+        }
       }
     };
 
     function createDrawing(user, fullCode) {
       try {
         const [header, b64] = fullCode.split('_');
-        // El header contiene los índices en hexadecimal
-        // Tu código de ejemplo "0110" significa que usa colores 0, 1 y 16 (el último 10 es 16 en hex)
         const usedColors = [];
         for(let i=0; i < header.length; i++) {
-          // Si detectamos un '1' seguido de algo, podría ser el 10 hex (16 dec)
-          // Pero la forma más segura es leer de 1 en 1 a menos que sea el color 16
-          // Corregimos la lectura del header:
-          let char = header[i];
-          if (char === '1' && header[i+1] === '0') {
-             usedColors.push(16);
-             i++; // saltamos el siguiente
-          } else {
-             usedColors.push(parseInt(char, 16));
-          }
+          if (header[i] === '1' && header[i+1] === '0') { usedColors.push(16); i++; }
+          else { usedColors.push(parseInt(header[i], 16)); }
         }
 
         const bin = atob(b64);
         const itemEl = document.createElement('div');
         itemEl.className = 'item';
+        itemEl.dataset.user = user; // Guardamos el usuario para poder borrarlo luego
+        
         const grid = document.createElement('div');
         grid.className = 'grid';
 
         for (let i = 0; i < bin.length; i++) {
           const byte = bin.charCodeAt(i);
-          const parts = [byte >> 4, byte & 0x0F];
-          parts.forEach(idxInDict => {
+          [byte >> 4, byte & 0x0F].forEach(idx => {
             const px = document.createElement('div');
             px.className = 'px';
-            const colorRealIdx = usedColors[idxInDict];
-            px.style.backgroundColor = colors[colorRealIdx] || 'transparent';
+            px.style.backgroundColor = colors[usedColors[idx]] || 'transparent';
             grid.appendChild(px);
           });
         }
@@ -106,8 +105,25 @@
           const minX = Math.min(...drawings.map(d => d.x));
           startX = minX - 250; 
         }
-        drawings.push({ el: itemEl, x: startX });
-      } catch(err) { console.error("Error decodificando:", err); }
+        drawings.push({ el: itemEl, x: startX, user: user });
+      } catch(err) {}
+    }
+
+    // Función para borrar los dibujos de un usuario específico
+    function removeUserDrawings(username) {
+      drawings = drawings.filter(d => {
+        if (d.user === username) {
+          d.el.remove(); // Quitar del HTML
+          return false;  // Quitar de la lista de animación
+        }
+        return true;
+      });
+    }
+
+    // Función para limpiar TODO
+    function clearAllDrawings() {
+      drawings.forEach(d => d.el.remove());
+      drawings = [];
     }
   </script>
 </body>
