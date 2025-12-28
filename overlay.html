@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Twitch Paint Overlay - MKSH</title>
+  <style>
+    body { 
+      margin: 0; background: transparent; overflow: hidden; 
+      width: 1920px; height: 1080px; display: flex; align-items: flex-start; 
+    }
+
+    #marquee { 
+      display: flex; flex-direction: row; white-space: nowrap; padding-top: 20px; width: 100%;
+    }
+    
+    .item { 
+      margin-left: 60px; display: flex; flex-direction: column; align-items: center; 
+      animation: scrollMove 15s linear infinite; will-change: transform;
+    }
+
+    @keyframes scrollMove {
+      from { transform: translateX(-300px); } 
+      to { transform: translateX(1920px); }    
+    }
+
+    .nick { 
+      color: white; font-family: 'Segoe UI', sans-serif; font-weight: bold; 
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.8); margin-bottom: 5px; 
+      background: rgba(0,0,0,0.7); padding: 2px 10px; border-radius: 4px; 
+    }
+
+    .grid { 
+      display: grid; grid-template-columns: repeat(16, 12px); grid-template-rows: repeat(16, 12px); 
+      background: transparent; 
+      padding: 0; /* CORREGIDO: Sin bordes ni padding en el stream */
+      border: none;
+    }
+
+    .px { width: 12px; height: 12px; }
+  </style>
+</head>
+<body>
+  <div id="marquee"></div>
+
+  <script>
+    const CHANNEL = 'mksh';
+    const colors = ['transparent','#000000','#aa0000','#00aa00','#aa5500','#0000aa','#aa00aa','#00aaaa','#aaaaaa','#555555','#ff5555','#55ff55','#ffff55','#5555ff','#ff55ff','#55ffff','#ffffff'];
+    const ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
+
+    ws.onopen = () => {
+      ws.send('CAP REQ :twitch.tv/commands twitch.tv/tags');
+      ws.send('PASS oauth:none');
+      ws.send('NICK justinfan' + Math.floor(Math.random() * 8999 + 1000));
+      ws.send(`JOIN #${CHANNEL}`);
+    };
+
+    ws.onmessage = (event) => {
+      const data = event.data;
+      if (data.includes('PING :tmi.twitch.tv')) ws.send('PONG :tmi.twitch.tv');
+      const match = data.match(/:([^!]+)![^@]+@[^ ]+ PRIVMSG #[^ ]+ :(.+)/);
+      if (match) {
+        const user = match[1];
+        const msg = match[2].trim();
+        if (msg.startsWith('!dibujar ')) {
+          createDrawing(user, msg.split(' ')[1]);
+        } else if (user.toLowerCase() === CHANNEL.toLowerCase()) {
+          if (msg.startsWith('!borrar ')) {
+            removeUserDrawings(msg.replace('!borrar ', '').replace('@', '').trim().toLowerCase());
+          } else if (msg === '!limpiar') {
+            document.getElementById('marquee').innerHTML = '';
+          }
+        }
+      }
+    };
+
+    function createDrawing(user, code) {
+      const marquee = document.getElementById('marquee');
+      const container = document.createElement('div');
+      container.className = 'item';
+      const grid = document.createElement('div');
+      grid.className = 'grid';
+
+      let pixels = [];
+      try {
+        for (let i = 0; i < code.length; i += 3) {
+          let colorIdx = parseInt(code[i], 16);
+          let count = parseInt(code.substring(i + 1, i + 3), 16);
+          for (let j = 0; j < count; j++) { if (pixels.length < 256) pixels.push(colorIdx); }
+        }
+        while(pixels.length < 256) pixels.push(0);
+        pixels.forEach(idx => {
+          const px = document.createElement('div');
+          px.className = 'px';
+          px.style.backgroundColor = idx === 0 ? 'transparent' : colors[idx];
+          grid.appendChild(px);
+        });
+        container.innerHTML = `<div class="nick">${user}</div>`;
+        container.appendChild(grid);
+        marquee.appendChild(container);
+      } catch (e) { console.error(e); }
+    }
+
+    function removeUserDrawings(username) {
+      document.querySelectorAll('.item').forEach(el => {
+        if (el.querySelector('.nick').innerText.toLowerCase() === username) el.remove();
+      });
+    }
+  </script>
+</body>
+</html>

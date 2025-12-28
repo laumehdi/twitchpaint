@@ -2,49 +2,93 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Twitch Paint - Pro</title>
+  <title>Twitch Paint - MKSH</title>
   <style>
-    :root { --bg-color: #f0f2f5; --text-color: #333; --border-color: #ccc; }
-    @media (prefers-color-scheme: dark) { :root { --bg-color: #1a1a1a; --text-color: #f0f0f0; --border-color: #444; } }
+    :root { --bg-color: #f0f2f5; --text-color: #333; }
+    @media (prefers-color-scheme: dark) { :root { --bg-color: #1a1a1a; --text-color: #f0f0f0; } }
     
     body { font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: var(--bg-color); color: var(--text-color); }
 
-    /* RESTAURADO: Fondo de transparencia PNG */
     .grid-container { 
-      background-color: #fff; 
-      background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%); 
-      background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0px; 
-      padding: 10px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); margin-bottom: 25px; 
+      padding: 0; /* Eliminamos el padding para que no haya blanco */
+      border: 4px solid #000; /* Borde negro sólido */
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      margin-bottom: 25px; 
+      line-height: 0; /* Evita espacios extraños abajo */
     }
 
-    #grid { display: grid; grid-template-columns: repeat(16, 20px); grid-template-rows: repeat(16, 20px); gap: 1px; background: rgba(0,0,0,0.1); }
-    .cell { width: 20px; height: 20px; background: transparent; cursor: crosshair; }
-    
-    .palette { display: flex; gap: 6px; flex-wrap: wrap; width: 360px; justify-content: center; margin-bottom: 25px; padding: 12px; background: rgba(0,0,0,0.05); border-radius: 12px; }
-    .p-color { width: 32px; height: 32px; cursor: pointer; border: 2px solid transparent; border-radius: 8px; }
-    .p-color.selected { border-color: var(--text-color); transform: scale(1.15); }
-    .p-transparent { background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%); background-size: 8px 8px; background-color: white; }
+    #grid { 
+      display: grid; 
+      grid-template-columns: repeat(16, 25px); 
+      grid-template-rows: repeat(16, 25px); 
+      gap: 0; /* Quitamos el gap blanco entre celdas */
+      background-image: 
+        linear-gradient(45deg, #ccc 25%, transparent 25%), 
+        linear-gradient(-45deg, #ccc 25%, transparent 25%), 
+        linear-gradient(45deg, transparent 75%, #ccc 75%), 
+        linear-gradient(-45deg, transparent 75%, #ccc 75%);
+      background-size: 20px 20px;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+      background-color: white; /* El fondo del patrón */
+    }
 
-    button { padding: 12px 28px; cursor: pointer; border: none; border-radius: 10px; font-weight: bold; color: white; background: #2ecc71; text-transform: uppercase; }
+    .cell { 
+      width: 25px; 
+      height: 25px; 
+      background: transparent; 
+      cursor: crosshair; 
+      /* Guía muy sutil para ver los cuadraditos sin usar blanco */
+      box-shadow: inset 0 0 0 0.1px rgba(0,0,0,0.1); 
+    }
     
-    /* RESTAURADO: Animación de copiado */
-    #output { margin-top: 20px; width: 450px; padding: 15px; border: 2px solid var(--border-color); border-radius: 10px; text-align: center; cursor: pointer; font-family: monospace; transition: all 0.3s ease; outline: none; }
-    #output.copied { border-color: #2ecc71; background: #d4edda; color: #155724; transform: scale(1.05); }
+    .palette { display: flex; gap: 6px; flex-wrap: wrap; width: 360px; justify-content: center; margin-bottom: 20px; padding: 12px; background: rgba(0,0,0,0.05); border-radius: 12px; }
+    .p-color { width: 32px; height: 32px; cursor: pointer; border: 2px solid transparent; border-radius: 8px; box-sizing: border-box; }
+    .p-color.selected { border-color: #000; transform: scale(1.1); box-shadow: 0 0 5px rgba(0,0,0,0.3); }
+
+    .p-transparent { 
+      background: white !important; 
+      position: relative; 
+      overflow: hidden; 
+      border: 1px solid #ccc; 
+    }
+    .p-transparent::after { 
+      content: ''; position: absolute; width: 140%; height: 2px; background: red; 
+      transform: rotate(45deg); top: 14px; left: -5px; 
+    }
+
+    .actions { display: flex; gap: 10px; margin-bottom: 15px; }
+    
+    button { padding: 12px 24px; cursor: pointer; border: none; border-radius: 10px; font-weight: bold; color: white; text-transform: uppercase; transition: opacity 0.2s; }
+    .btn-generate { background: #9146ff; }
+    .btn-clear { background: #ff4646; }
+    button:hover { opacity: 0.8; }
+    
+    #output { width: 450px; padding: 15px; border: 2px solid #000; border-radius: 10px; text-align: center; cursor: pointer; font-family: monospace; background: white; color: black; outline: none; }
+    #output.copied { border-color: #2ecc71; background: #d4edda; color: #155724; }
   </style>
 </head>
 <body>
-  <div class="grid-container"><div id="grid"></div></div>
+
+  <div class="grid-container">
+    <div id="grid"></div>
+  </div>
+  
   <div class="palette" id="palette"></div>
-  <button onclick="generateCode()">Generar Código</button>
-  <input type="text" id="output" readonly placeholder="Dibuja y clic en Generar" onclick="copyToClipboard()">
+
+  <div class="actions">
+    <button class="btn-clear" onclick="clearCanvas()">Limpiar Todo</button>
+    <button class="btn-generate" onclick="generateCode()">Generar Código</button>
+  </div>
+
+  <input type="text" id="output" readonly placeholder="Dibuja y haz clic en Generar" onclick="copyToClipboard()">
 
   <script>
     const colors = ['transparent','#000000','#aa0000','#00aa00','#aa5500','#0000aa','#aa00aa','#00aaaa','#aaaaaa','#555555','#ff5555','#55ff55','#ffff55','#5555ff','#ff55ff','#55ffff','#ffffff'];
     let selectedIdx = 1;
     let isDrawing = false;
     const cells = [];
-
     const grid = document.getElementById('grid');
+
     for (let i = 0; i < 256; i++) {
       const cell = document.createElement('div');
       cell.className = 'cell';
@@ -75,6 +119,16 @@
       cell.style.backgroundColor = selectedIdx === 0 ? 'transparent' : colors[selectedIdx];
     }
 
+    function clearCanvas() {
+      if(confirm("¿Seguro que quieres borrar todo el dibujo?")) {
+        cells.forEach(cell => {
+          cell.dataset.idx = "0";
+          cell.style.backgroundColor = "transparent";
+        });
+        document.getElementById('output').value = "";
+      }
+    }
+
     function generateCode() {
       let compressed = "";
       let i = 0;
@@ -88,17 +142,16 @@
         compressed += parseInt(color).toString(16) + count.toString(16).padStart(2, '0');
       }
       document.getElementById('output').value = "!dibujar " + compressed;
-      document.getElementById('output').classList.remove('copied');
     }
 
     function copyToClipboard() {
       const out = document.getElementById('output');
       if (!out.value.startsWith("!dibujar")) return;
-      const originalValue = out.value;
       out.select();
       document.execCommand("copy");
+      const originalValue = out.value;
       out.classList.add('copied');
-      out.value = "¡Copiado con éxito! ✅";
+      out.value = "¡Copiado! Pégalo en el chat de mksh ✅";
       setTimeout(() => {
         out.classList.remove('copied');
         out.value = originalValue;
