@@ -2,37 +2,41 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Twitch Paint - Comprimido</title>
+  <title>Twitch Paint - Pro</title>
   <style>
-    :root { --bg-color: #f0f2f5; --text-color: #333333; --border-color: #cccccc; --input-bg: #ffffff; }
-    @media (prefers-color-scheme: dark) { :root { --bg-color: #1a1a1a; --text-color: #f0f0f0; --border-color: #444444; --input-bg: #2d2d2d; } }
+    :root { --bg-color: #f0f2f5; --text-color: #333; --border-color: #ccc; }
+    @media (prefers-color-scheme: dark) { :root { --bg-color: #1a1a1a; --text-color: #f0f0f0; --border-color: #444; } }
+    
     body { font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: var(--bg-color); color: var(--text-color); }
-    .grid-container { background-color: #ffffff; background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%); background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0px; padding: 10px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); margin-bottom: 25px; }
+
+    /* RESTAURADO: Fondo de transparencia PNG */
+    .grid-container { 
+      background-color: #fff; 
+      background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%); 
+      background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0px; 
+      padding: 10px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); margin-bottom: 25px; 
+    }
+
     #grid { display: grid; grid-template-columns: repeat(16, 20px); grid-template-rows: repeat(16, 20px); gap: 1px; background: rgba(0,0,0,0.1); }
     .cell { width: 20px; height: 20px; background: transparent; cursor: crosshair; }
+    
     .palette { display: flex; gap: 6px; flex-wrap: wrap; width: 360px; justify-content: center; margin-bottom: 25px; padding: 12px; background: rgba(0,0,0,0.05); border-radius: 12px; }
-    .p-color { width: 32px; height: 32px; cursor: pointer; border: 2px solid transparent; border-radius: 8px; transition: transform 0.1s; }
+    .p-color { width: 32px; height: 32px; cursor: pointer; border: 2px solid transparent; border-radius: 8px; }
     .p-color.selected { border-color: var(--text-color); transform: scale(1.15); }
-    .p-transparent { background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%); background-size: 8px 8px; background-position: 0 0, 0 4px, 4px -4px, -4px 0px; background-color: white; }
-    .controls { display: flex; gap: 15px; }
-    button { padding: 12px 28px; cursor: pointer; border: none; border-radius: 10px; font-weight: bold; color: white; transition: opacity 0.2s; text-transform: uppercase; }
-    .btn-clear { background: #e74c3c; }
-    .btn-gen { background: #2ecc71; }
-    .output-wrapper { margin-top: 20px; display: flex; flex-direction: column; align-items: center; }
-    #output { width: 420px; padding: 15px; border: 2px solid var(--border-color); border-radius: 10px; background: var(--input-bg); color: var(--text-color); text-align: center; cursor: pointer; font-family: monospace; font-size: 14px; transition: all 0.3s ease; outline: none; }
-    #output.copied { border-color: #2ecc71; background: #d4edda; color: #155724; transform: scale(1.02); font-weight: bold; }
+    .p-transparent { background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%); background-size: 8px 8px; background-color: white; }
+
+    button { padding: 12px 28px; cursor: pointer; border: none; border-radius: 10px; font-weight: bold; color: white; background: #2ecc71; text-transform: uppercase; }
+    
+    /* RESTAURADO: Animación de copiado */
+    #output { margin-top: 20px; width: 450px; padding: 15px; border: 2px solid var(--border-color); border-radius: 10px; text-align: center; cursor: pointer; font-family: monospace; transition: all 0.3s ease; outline: none; }
+    #output.copied { border-color: #2ecc71; background: #d4edda; color: #155724; transform: scale(1.05); }
   </style>
 </head>
 <body>
   <div class="grid-container"><div id="grid"></div></div>
   <div class="palette" id="palette"></div>
-  <div class="controls">
-    <button class="btn-clear" onclick="clearGrid()">Borrar Todo</button>
-    <button class="btn-gen" onclick="generateCode()">Generar Código</button>
-  </div>
-  <div class="output-wrapper">
-    <input type="text" id="output" readonly placeholder="Primero dibuja y pulsa 'Generar'" onclick="copyToClipboard()">
-  </div>
+  <button onclick="generateCode()">Generar Código</button>
+  <input type="text" id="output" readonly placeholder="Dibuja y clic en Generar" onclick="copyToClipboard()">
 
   <script>
     const colors = ['transparent','#000000','#aa0000','#00aa00','#aa5500','#0000aa','#aa00aa','#00aaaa','#aaaaaa','#555555','#ff5555','#55ff55','#ffff55','#5555ff','#ff55ff','#55ffff','#ffffff'];
@@ -40,60 +44,48 @@
     let isDrawing = false;
     const cells = [];
 
-    function init() {
-      const grid = document.getElementById('grid');
-      for (let i = 0; i < 256; i++) {
-        const cell = document.createElement('div');
-        cell.className = 'cell';
-        cell.dataset.idx = "0";
-        cell.onmousedown = (e) => { isDrawing = true; paint(cell); e.preventDefault(); };
-        cell.onmouseenter = () => { if (isDrawing) paint(cell); };
-        grid.appendChild(cell);
-        cells.push(cell);
-      }
-      window.onmouseup = () => isDrawing = false;
-      renderPalette();
+    const grid = document.getElementById('grid');
+    for (let i = 0; i < 256; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.idx = "0";
+      cell.onmousedown = (e) => { isDrawing = true; paint(cell); e.preventDefault(); };
+      cell.onmouseenter = () => { if (isDrawing) paint(cell); };
+      grid.appendChild(cell);
+      cells.push(cell);
     }
+    window.onmouseup = () => isDrawing = false;
 
-    function renderPalette() {
-      const paletteDiv = document.getElementById('palette');
-      paletteDiv.innerHTML = '';
-      colors.forEach((c, i) => {
-        const btn = document.createElement('div');
-        btn.className = 'p-color' + (i === selectedIdx ? ' selected' : '');
-        if (i === 0) btn.classList.add('p-transparent');
-        else btn.style.backgroundColor = c;
-        btn.onclick = () => {
-          selectedIdx = i;
-          document.querySelectorAll('.p-color').forEach(b => b.classList.remove('selected'));
-          btn.classList.add('selected');
-        };
-        paletteDiv.appendChild(btn);
-      });
-    }
+    const pal = document.getElementById('palette');
+    colors.forEach((c, i) => {
+      const b = document.createElement('div');
+      b.className = 'p-color' + (i === 0 ? ' p-transparent' : '');
+      if (i > 0) b.style.backgroundColor = c;
+      if (i === selectedIdx) b.classList.add('selected');
+      b.onclick = () => {
+        selectedIdx = i;
+        document.querySelectorAll('.p-color').forEach(x => x.classList.remove('selected'));
+        b.classList.add('selected');
+      };
+      pal.appendChild(b);
+    });
 
     function paint(cell) {
       cell.dataset.idx = selectedIdx;
       cell.style.backgroundColor = selectedIdx === 0 ? 'transparent' : colors[selectedIdx];
     }
 
-    // NUEVA FUNCIÓN CON COMPRESIÓN
     function generateCode() {
       let compressed = "";
-      let count = 1;
-      let current = cells[0].dataset.idx;
-
-      for (let i = 1; i <= cells.length; i++) {
-        let next = i < cells.length ? cells[i].dataset.idx : null;
-        if (next === current && count < 255) {
+      let i = 0;
+      while (i < 256) {
+        let color = cells[i].dataset.idx;
+        let count = 0;
+        while (i < 256 && cells[i].dataset.idx === color && count < 255) {
           count++;
-        } else {
-          const colorHex = parseInt(current).toString(16);
-          const countHex = count.toString(16).padStart(2, '0');
-          compressed += colorHex + countHex;
-          current = next;
-          count = 1;
+          i++;
         }
+        compressed += parseInt(color).toString(16) + count.toString(16).padStart(2, '0');
       }
       document.getElementById('output').value = "!dibujar " + compressed;
       document.getElementById('output').classList.remove('copied');
@@ -101,23 +93,17 @@
 
     function copyToClipboard() {
       const out = document.getElementById('output');
-      if (!out.value || !out.value.startsWith('!dibujar')) return;
+      if (!out.value.startsWith("!dibujar")) return;
       const originalValue = out.value;
       out.select();
       document.execCommand("copy");
       out.classList.add('copied');
       out.value = "¡Copiado con éxito! ✅";
-      setTimeout(() => { out.classList.remove('copied'); out.value = originalValue; }, 2000);
+      setTimeout(() => {
+        out.classList.remove('copied');
+        out.value = originalValue;
+      }, 1500);
     }
-
-    function clearGrid() {
-      if (confirm("¿Borrar todo?")) {
-        cells.forEach(c => { c.dataset.idx = "0"; c.style.backgroundColor = 'transparent'; });
-        document.getElementById('output').value = "";
-      }
-    }
-    init();
   </script>
 </body>
 </html>
-
