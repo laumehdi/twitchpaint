@@ -15,6 +15,9 @@
       align-items: center; 
       will-change: transform;
       transition: opacity 0.5s ease;
+      /* Mejora de renderizado para OBS */
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
     }
 
     .nick { 
@@ -27,8 +30,24 @@
       text-shadow: -1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000, 2px 2px 3px rgba(0,0,0,0.8);
     }
 
-    .grid { display: grid; grid-template-columns: repeat(16, 12px); grid-template-rows: repeat(16, 12px); }
-    .px { width: 12px; height: 12px; }
+    /* Cambiamos a 12px exactos pero con un truco en los hijos */
+    .grid { 
+      display: grid; 
+      grid-template-columns: repeat(16, 12px); 
+      grid-template-rows: repeat(16, 12px); 
+      background-color: transparent;
+    }
+
+    /* Solución al espacio transparente: 
+       Hacemos el pixel un poquito más grande (13px) para que se solapen 
+       y eliminamos el suavizado de bordes */
+    .px { 
+      width: 13px; 
+      height: 13px; 
+      margin-right: -1px; 
+      margin-bottom: -1px;
+      shape-rendering: crispEdges;
+    }
 
     @keyframes winnerDance {
       0% { transform: translate(-50%, -50%) scale(3) rotate(0deg); filter: drop-shadow(0 0 10px gold); }
@@ -103,10 +122,8 @@
         const user = e.data.split('!')[0].substring(1).toLowerCase();
         const isAdmin = (user === CHANNEL || user === 'laumehdi');
 
-        // LÓGICA DE VELOCIDAD CON LÍMITE EN 2
         if (msg.startsWith('!velocidad ') && isAdmin) {
           let val = parseInt(msg.split(' ')[1]);
-          // Solo aceptamos valores mayores a 0 y menores o iguales a 2
           if (!isNaN(val) && val > 0 && val <= 2) {
             globalSpeedMultiplier = val;
           }
