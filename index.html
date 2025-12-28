@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Editor Ultra-Comprimido</title>
+  <title>Editor de Pixeles</title>
   <style>
     :root { --bg-color: #f0f2f5; --text-color: #333; }
     body { font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: var(--bg-color); color: var(--text-color); }
@@ -29,7 +29,7 @@
   <div class="palette" id="palette"></div>
   <div>
     <button class="btn-clear" onclick="clearCanvas()">Limpiar</button>
-    <button class="btn-generate" onclick="generateCode()">Generar Código Comprimido</button>
+    <button class="btn-generate" onclick="generateCode()">Generar Código</button>
   </div>
   <input type="text" id="output" readonly onclick="copyToClipboard()" placeholder="El código aparecerá aquí">
 
@@ -79,14 +79,12 @@
     function generateCode() {
       const pixelData = cells.map(c => parseInt(c.dataset.idx));
       const usedColors = [...new Set(pixelData)].sort((a,b) => a-b);
-      
       const buffer = new Uint8Array(128);
       for (let i = 0; i < 256; i += 2) {
         const high = usedColors.indexOf(pixelData[i]);
         const low = usedColors.indexOf(pixelData[i+1]);
         buffer[i/2] = (high << 4) | (low & 0x0F);
       }
-
       const b64 = btoa(String.fromCharCode(...buffer));
       const header = usedColors.map(c => c.toString(16)).join('');
       document.getElementById('output').value = "!dibujar " + header + "_" + b64;
@@ -97,7 +95,6 @@
       if (!out.value) return;
       out.select();
       document.execCommand("copy");
-      alert("¡Código copiado!");
     }
   </script>
 </body>
