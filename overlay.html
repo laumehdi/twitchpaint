@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Overlay de Dibujos - Fila Continua</title>
+  <title>Overlay Infinito - Izquierda a Derecha</title>
   <style>
     body { 
       margin: 0; 
@@ -12,25 +12,20 @@
       height: 1080px; 
     }
 
-    /* El contenedor ahora es una tira larga que se mueve */
-    #marquee { 
-      display: flex; 
-      flex-direction: row; 
-      align-items: flex-start;
-      gap: 50px; /* DISTANCIA ENTRE DIBUJOS: Ajusta esto a tu gusto */
-      position: absolute;
-      left: 0;
-      top: 50px;
-      padding-left: 100%; /* Empiezan fuera de la pantalla a la derecha */
-      animation: moveContainer 30s linear infinite; /* Animación opcional si quieres que todo se mueva constante */
+    #container {
+      position: relative;
+      width: 100%;
+      height: 100%;
     }
 
-    /* Estilo de cada dibujo individual */
     .item { 
+      position: absolute;
+      /* PUNTO 1: Más arriba, pegado al "techo" */
+      top: 10px; 
       display: flex; 
       flex-direction: column; 
       align-items: center; 
-      flex-shrink: 0; /* Importante: evita que los dibujos se aplasten */
+      will-change: transform;
     }
 
     .nick { 
@@ -38,52 +33,50 @@
       font-family: 'Segoe UI', sans-serif; 
       font-weight: bold; 
       text-shadow: 2px 2px 4px #000; 
-      margin-bottom: 8px; 
+      margin-bottom: 4px; 
       background: rgba(0,0,0,0.8); 
-      padding: 4px 12px; 
-      border-radius: 6px;
-      font-size: 18px;
+      padding: 2px 10px; 
+      border-radius: 4px;
+      font-size: 16px;
+      white-space: nowrap;
     }
 
     .grid { 
       display: grid; 
       grid-template-columns: repeat(16, 12px); 
-      grid-template-rows: repeat(16, 12px); 
-      box-shadow: 0 0 15px rgba(0,0,0,0.5);
+      grid-template-rows: repeat(16, 12px);
+      background: transparent;
     }
 
     .px { width: 12px; height: 12px; }
-
-    /* Animación suave para que la fila avance */
-    @keyframes scroll {
-      0% { transform: translateX(0); }
-      100% { transform: translateX(-5000px); }
-    }
   </style>
 </head>
 <body>
-  <div id="wrapper" style="position: relative; width: 100%; overflow: hidden;">
-    <div id="marquee"></div>
-  </div>
+  <div id="container"></div>
 
   <script>
     const CHANNEL = 'laumehdi'; 
     const colors = ['transparent','#000000','#aa0000','#00aa00','#aa5500','#0000aa','#aa00aa','#00aaaa','#aaaaaa','#555555','#ff5555','#55ff55','#ffff55','#5555ff','#ff55ff','#55ffff','#ffffff'];
     
-    // Variables para el movimiento manual (más fluido que CSS para esto)
-    let currentPosX = window.innerWidth;
-    const marquee = document.getElementById('marquee');
-    const speed = 2; // VELOCIDAD: Píxeles por frame
+    const speed = 2.5; // Velocidad de movimiento
+    const drawings = []; // Lista para trackear los dibujos activos
 
-    function updateMovement() {
-      currentPosX -= speed;
-      marquee.style.transform = `translateX(${currentPosX}px)`;
-      
-      // Si el contenedor ya salió de la pantalla por la izquierda, lo reiniciamos si hay pocos elementos
-      // o simplemente dejamos que siga fluyendo.
-      requestAnimationFrame(updateMovement);
+    // LOOP DE ANIMACIÓN POR JAVASCRIPT (Para control total e infinito)
+    function animate() {
+      for (let i = drawings.length - 1; i >= 0; i--) {
+        const d = drawings[i];
+        d.x += speed;
+        
+        // PUNTO 3: Si llega al borde derecho (1920px + su ancho), vuelve a la izquierda
+        if (d.x > 1920) {
+          d.x = -250; // Reaparece por la izquierda
+        }
+        
+        d.el.style.transform = `translateX(${d.x}px)`;
+      }
+      requestAnimationFrame(animate);
     }
-    updateMovement();
+    animate();
 
     const ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
     ws.onopen = () => {
@@ -94,18 +87,27 @@
 
     ws.onmessage = (e) => {
       if (e.data.includes('PING')) ws.send('PONG :tmi.twitch.tv');
-      const m = e.data.match(/:([^!]+).+PRIVMSG.+(!dibujar\s.+)/);
-      if (m) createDrawing(m[1], m[2].split(' ')[1]);
+      const parts = e.data.split('PRIVMSG #' + CHANNEL + ' :');
+      if (parts.length > 1) {
+        const msg = parts[1].trim();
+        const user = e.data.split('!')[0].substring(1);
+        if (msg.startsWith('!dibujar ')) {
+          createDrawing(user, msg.split(' ')[1]);
+        }
+      }
     };
 
     function createDrawing(user, fullCode) {
       try {
+        const parent = document.getElementById('container');
         const [header, b64] = fullCode.split('_');
+        if (!b64) return;
+
         const usedColors = header.split('').map(c => parseInt(c, 16));
         const bin = atob(b64);
         
-        const container = document.createElement('div');
-        container.className = 'item';
+        const itemEl = document.createElement('div');
+        itemEl.className = 'item';
         
         const grid = document.createElement('div');
         grid.className = 'grid';
@@ -120,13 +122,25 @@
           });
         }
 
-        container.innerHTML = `<div class="nick">${user}</div>`;
-        container.appendChild(grid);
-        marquee.appendChild(container);
+        itemEl.innerHTML = `<div class="nick">${user}</div>`;
+        itemEl.appendChild(grid);
+        parent.appendChild(itemEl);
 
-        // Borrar el dibujo después de un tiempo para no sobrecargar el navegador
-        setTimeout(() => container.remove(), 60000); 
-      } catch(err) { console.error("Error decodificando"); }
+        // Calculamos una posición inicial que no pise a los demás
+        let startX = -250;
+        if (drawings.length > 0) {
+          // Buscamos el dibujo que esté más a la izquierda actualmente
+          const minX = Math.min(...drawings.map(d => d.x));
+          startX = minX - 300; // Lo ponemos 300px detrás del último
+        }
+
+        // Añadimos a la lista de animación
+        drawings.push({
+          el: itemEl,
+          x: startX
+        });
+
+      } catch(err) { console.error(err); }
     }
   </script>
 </body>
