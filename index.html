@@ -2,61 +2,25 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Twitch Paint</title>
+  <title>Twitch Paint - Comprimido</title>
   <style>
     :root { --bg-color: #f0f2f5; --text-color: #333333; --border-color: #cccccc; --input-bg: #ffffff; }
     @media (prefers-color-scheme: dark) { :root { --bg-color: #1a1a1a; --text-color: #f0f0f0; --border-color: #444444; --input-bg: #2d2d2d; } }
-    
     body { font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: var(--bg-color); color: var(--text-color); }
-
-    /* RESTAURADO: Patrón de transparencia PNG completo */
-    .grid-container { 
-      background-color: #ffffff; 
-      background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), 
-                        linear-gradient(-45deg, #ccc 25%, transparent 25%), 
-                        linear-gradient(45deg, transparent 75%, #ccc 75%), 
-                        linear-gradient(-45deg, transparent 75%, #ccc 75%); 
-      background-size: 20px 20px; 
-      background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-      padding: 10px; 
-      border-radius: 12px; 
-      box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
-      margin-bottom: 25px; 
-    }
-
+    .grid-container { background-color: #ffffff; background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%); background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0px; padding: 10px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); margin-bottom: 25px; }
     #grid { display: grid; grid-template-columns: repeat(16, 20px); grid-template-rows: repeat(16, 20px); gap: 1px; background: rgba(0,0,0,0.1); }
     .cell { width: 20px; height: 20px; background: transparent; cursor: crosshair; }
-    
     .palette { display: flex; gap: 6px; flex-wrap: wrap; width: 360px; justify-content: center; margin-bottom: 25px; padding: 12px; background: rgba(0,0,0,0.05); border-radius: 12px; }
     .p-color { width: 32px; height: 32px; cursor: pointer; border: 2px solid transparent; border-radius: 8px; transition: transform 0.1s; }
     .p-color.selected { border-color: var(--text-color); transform: scale(1.15); }
-    
-    /* Patrón para el color transparente en la paleta */
-    .p-transparent { 
-      background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%),
-                        linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%); 
-      background-size: 8px 8px; 
-      background-position: 0 0, 0 4px, 4px -4px, -4px 0px;
-      background-color: white; 
-    }
-
+    .p-transparent { background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%); background-size: 8px 8px; background-position: 0 0, 0 4px, 4px -4px, -4px 0px; background-color: white; }
     .controls { display: flex; gap: 15px; }
     button { padding: 12px 28px; cursor: pointer; border: none; border-radius: 10px; font-weight: bold; color: white; transition: opacity 0.2s; text-transform: uppercase; }
-    button:hover { opacity: 0.8; }
     .btn-clear { background: #e74c3c; }
     .btn-gen { background: #2ecc71; }
-    
     .output-wrapper { margin-top: 20px; display: flex; flex-direction: column; align-items: center; }
-    #output { 
-      width: 420px; padding: 15px; border: 2px solid var(--border-color); 
-      border-radius: 10px; background: var(--input-bg); color: var(--text-color); 
-      text-align: center; cursor: pointer; font-family: monospace; font-size: 14px;
-      transition: all 0.3s ease; outline: none;
-    }
-    #output.copied { 
-      border-color: #2ecc71; background: #d4edda; color: #155724; 
-      transform: scale(1.02); font-weight: bold;
-    }
+    #output { width: 420px; padding: 15px; border: 2px solid var(--border-color); border-radius: 10px; background: var(--input-bg); color: var(--text-color); text-align: center; cursor: pointer; font-family: monospace; font-size: 14px; transition: all 0.3s ease; outline: none; }
+    #output.copied { border-color: #2ecc71; background: #d4edda; color: #155724; transform: scale(1.02); font-weight: bold; }
   </style>
 </head>
 <body>
@@ -93,7 +57,7 @@
 
     function renderPalette() {
       const paletteDiv = document.getElementById('palette');
-      paletteDiv.innerHTML = ''; // Limpiar para evitar duplicados
+      paletteDiv.innerHTML = '';
       colors.forEach((c, i) => {
         const btn = document.createElement('div');
         btn.className = 'p-color' + (i === selectedIdx ? ' selected' : '');
@@ -113,27 +77,37 @@
       cell.style.backgroundColor = selectedIdx === 0 ? 'transparent' : colors[selectedIdx];
     }
 
+    // NUEVA FUNCIÓN CON COMPRESIÓN
     function generateCode() {
-      const code = cells.map(c => parseInt(c.dataset.idx).toString(16)).join('');
-      document.getElementById('output').value = "!dibujar " + code;
+      let compressed = "";
+      let count = 1;
+      let current = cells[0].dataset.idx;
+
+      for (let i = 1; i <= cells.length; i++) {
+        let next = i < cells.length ? cells[i].dataset.idx : null;
+        if (next === current && count < 255) {
+          count++;
+        } else {
+          const colorHex = parseInt(current).toString(16);
+          const countHex = count.toString(16).padStart(2, '0');
+          compressed += colorHex + countHex;
+          current = next;
+          count = 1;
+        }
+      }
+      document.getElementById('output').value = "!dibujar " + compressed;
       document.getElementById('output').classList.remove('copied');
     }
 
     function copyToClipboard() {
       const out = document.getElementById('output');
       if (!out.value || !out.value.startsWith('!dibujar')) return;
-      
       const originalValue = out.value;
       out.select();
       document.execCommand("copy");
-      
       out.classList.add('copied');
       out.value = "¡Copiado con éxito! ✅";
-      
-      setTimeout(() => {
-        out.classList.remove('copied');
-        out.value = originalValue;
-      }, 2000);
+      setTimeout(() => { out.classList.remove('copied'); out.value = originalValue; }, 2000);
     }
 
     function clearGrid() {
@@ -142,7 +116,6 @@
         document.getElementById('output').value = "";
       }
     }
-
     init();
   </script>
 </body>
