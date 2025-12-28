@@ -31,12 +31,10 @@ def twitch_bot():
                 user = match.group(1).lower()
                 msg = match.group(2).strip()
 
-                # Detectamos comando !dibujar
                 if msg.startswith("!dibujar "):
                     draw_code = msg.replace("!dibujar ", "").strip()
                     socketio.emit('new_drawing', {'user': user, 'code': draw_code})
 
-                # Moderación
                 if user == CHANNEL:
                     if msg.startswith("!borrar "):
                         target = msg.replace("!borrar ", "").strip().lower().replace('@', '')
