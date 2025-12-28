@@ -31,10 +31,8 @@
       text-shadow: 2px 2px 4px #000; 
       margin-bottom: 6px; 
       background: rgba(0,0,0,0.8); 
-      /* Ajuste de padding para acompañar el tamaño */
       padding: 3px 14px; 
       border-radius: 5px; 
-      /* PUNTO SOLICITADO: Nombre un poquito más grande */
       font-size: 18px; 
       white-space: nowrap;
     }
@@ -89,10 +87,24 @@
 
         if (msg.startsWith('!dibujar ')) {
           createDrawing(user, msg.split(' ')[1]);
-        } else if (msg.startsWith('!borrar ')) {
-          removeUserDrawings(msg.replace('!borrar ', '').replace('@', '').trim().toLowerCase());
-        } else if (msg === '!limpiar') {
-          clearAllDrawings();
+        } 
+        else if (msg.startsWith('!borrar')) {
+          const target = msg.replace('!borrar', '').replace('@', '').trim().toLowerCase();
+          if (target === "") {
+            removeLastUserDrawing(user);
+          } else {
+            removeAllUserDrawings(target);
+          }
+        } 
+        else if (msg === '!limpiar') {
+          // Lógica de limpieza inteligente
+          if (user === CHANNEL.toLowerCase()) {
+            // Si eres tú (dueño), limpia TODO
+            clearAllDrawings();
+          } else {
+            // Si es un usuario normal, limpia solo lo SUYO
+            removeAllUserDrawings(user);
+          }
         }
       }
     };
@@ -122,7 +134,7 @@
           });
         }
 
-        itemEl.innerHTML = `<div class="nick">${user}</div>`;
+        itemEl.innerHTML = `<div class=\"nick\">${user}</div>`;
         itemEl.appendChild(grid);
         document.getElementById('container').appendChild(itemEl);
 
@@ -137,9 +149,22 @@
       } catch(err) {}
     }
 
-    function removeUserDrawings(username) {
+    function removeLastUserDrawing(username) {
+      for (let i = drawings.length - 1; i >= 0; i--) {
+        if (drawings[i].user === username) {
+          drawings[i].el.remove();
+          drawings.splice(i, 1);
+          break;
+        }
+      }
+    }
+
+    function removeAllUserDrawings(username) {
       drawings = drawings.filter(d => {
-        if (d.user === username) { d.el.remove(); return false; }
+        if (d.user === username) { 
+          d.el.remove(); 
+          return false; 
+        }
         return true;
       });
     }
