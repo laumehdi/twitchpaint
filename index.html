@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Editor de Pixeles</title>
+  <title>Editor de Pixeles - Twitch</title>
   <style>
     :root { --bg-color: #f0f2f5; --text-color: #333; }
     body { font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: var(--bg-color); color: var(--text-color); }
@@ -18,10 +18,12 @@
     .p-color.selected { border-color: #000; transform: scale(1.1); }
     .p-transparent { background: white !important; position: relative; border: 1px solid #ccc; overflow: hidden;}
     .p-transparent::after { content: ''; position: absolute; width: 140%; height: 2px; background: red; transform: rotate(45deg); top: 14px; left: -5px; }
-    button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 8px; font-weight: bold; color: white; margin: 5px; }
+    button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 8px; font-weight: bold; color: white; margin: 5px; transition: all 0.2s; }
     .btn-generate { background: #9146ff; }
     .btn-clear { background: #ff4646; }
-    #output { width: 450px; padding: 15px; border: 2px solid #000; border-radius: 10px; text-align: center; font-family: monospace; }
+    #output { width: 450px; padding: 15px; border: 2px solid #000; border-radius: 10px; text-align: center; font-family: monospace; transition: all 0.3s; cursor: pointer; background: white; }
+    /* Clase para el efecto de copiado */
+    .copied-success { background: #d4ffda !important; border-color: #27ae60 !important; color: #1e8449 !important; }
   </style>
 </head>
 <body>
@@ -29,9 +31,9 @@
   <div class="palette" id="palette"></div>
   <div>
     <button class="btn-clear" onclick="clearCanvas()">Limpiar</button>
-    <button class="btn-generate" onclick="generateCode()">Generar Código</button>
+    <button class="btn-generate" onclick="generateCode()">Generar y Copiar</button>
   </div>
-  <input type="text" id="output" readonly onclick="copyToClipboard()" placeholder="El código aparecerá aquí">
+  <input type="text" id="output" readonly onclick="copyToClipboard()" placeholder="El código se copiará al hacer clic">
 
   <script>
     const colors = ['transparent','#000000','#aa0000','#00aa00','#aa5500','#0000aa','#aa00aa','#00aaaa','#aaaaaa','#555555','#ff5555','#55ff55','#ffff55','#5555ff','#ff55ff','#55ffff','#ffffff'];
@@ -73,10 +75,11 @@
     function clearCanvas() {
       if(confirm("¿Borrar dibujo?")) {
         cells.forEach(c => { c.dataset.idx = "0"; c.style.backgroundColor = "transparent"; });
+        document.getElementById('output').value = "";
       }
     }
 
-    function generateCode() {
+    async function generateCode() {
       const pixelData = cells.map(c => parseInt(c.dataset.idx));
       const usedColors = [...new Set(pixelData)].sort((a,b) => a-b);
       const buffer = new Uint8Array(128);
@@ -87,14 +90,31 @@
       }
       const b64 = btoa(String.fromCharCode(...buffer));
       const header = usedColors.map(c => c.toString(16)).join('');
-      document.getElementById('output').value = "!dibujar " + header + "_" + b64;
+      const finalCode = "!dibujar " + header + "_" + b64;
+      
+      document.getElementById('output').value = finalCode;
+      copyToClipboard(); // Copia automáticamente al generar
     }
 
-    function copyToClipboard() {
+    async function copyToClipboard() {
       const out = document.getElementById('output');
       if (!out.value) return;
-      out.select();
-      document.execCommand("copy");
+
+      try {
+        await navigator.clipboard.writeText(out.value);
+        // Efecto visual sin Alert
+        out.classList.add('copied-success');
+        const originalText = out.value;
+        out.value = "¡Copiado al portapapeles!";
+        setTimeout(() => {
+          out.classList.remove('copied-success');
+          out.value = originalText;
+        }, 1200);
+      } catch (err) {
+        // Fallback para navegadores antiguos
+        out.select();
+        document.execCommand('copy');
+      }
     }
   </script>
 </body>
