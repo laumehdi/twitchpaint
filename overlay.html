@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Overlay Anti-Colisión con Margen</title>
+  <title>Overlay de Dibujos - Mayor Velocidad</title>
   <style>
     body { 
       margin: 0; 
@@ -18,7 +18,6 @@
     }
     .item { 
       position: absolute; 
-      /* AJUSTE: Margen de 20px desde el techo */
       top: 20px; 
       display: flex; 
       flex-direction: column; 
@@ -52,8 +51,9 @@
     const CHANNEL = 'laumehdi'; 
     const colors = ['transparent','#000000','#aa0000','#00aa00','#aa5500','#0000aa','#aa00aa','#00aaaa','#aaaaaa','#555555','#ff5555','#55ff55','#ffff55','#5555ff','#ff55ff','#55ffff','#ffffff'];
     
-    const speed = 2; 
-    const spacing = 280; // Distancia entre dibujos (un poco más para evitar roces)
+    // --- AJUSTE DE VELOCIDAD ---
+    const speed = 3.5; // Antes era 2, ahora 3.5 para mayor fluidez
+    const spacing = 300; // Aumentamos un pelín el espacio por la velocidad
     let drawings = [];
 
     function animate() {
@@ -61,7 +61,7 @@
         const d = drawings[i];
         d.x += speed;
         
-        // Loop infinito con recolocación al final de la fila
+        // Loop infinito
         if (d.x > 1920) {
             let minX = 0;
             drawings.forEach(other => { if(other.x < minX) minX = other.x; });
@@ -126,7 +126,6 @@
         itemEl.appendChild(grid);
         document.getElementById('container').appendChild(itemEl);
 
-        // Posicionamiento en cola
         let startX = -250; 
         if (drawings.length > 0) {
             let minX = 0;
