@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Overlay con Comandos</title>
+  <title>Overlay Anti-Colisión</title>
   <style>
     body { margin: 0; background: transparent; overflow: hidden; width: 1920px; height: 1080px; }
     #container { position: relative; width: 100%; height: 100%; }
@@ -26,13 +26,20 @@
     const colors = ['transparent','#000000','#aa0000','#00aa00','#aa5500','#0000aa','#aa00aa','#00aaaa','#aaaaaa','#555555','#ff5555','#55ff55','#ffff55','#5555ff','#ff55ff','#55ffff','#ffffff'];
     
     const speed = 2; 
-    let drawings = []; // Cambiado a 'let' para poder vaciarla con !limpiar
+    const spacing = 250; // ESPACIO MÍNIMO entre dibujos (en píxeles)
+    let drawings = [];
 
     function animate() {
-      for (let i = drawings.length - 1; i >= 0; i--) {
+      for (let i = 0; i < drawings.length; i++) {
         const d = drawings[i];
         d.x += speed;
-        if (d.x > 1920) d.x = -220;
+        
+        // Loop infinito: si sale por la derecha, busca el último lugar de la fila
+        if (d.x > 1920) {
+            let minX = 0;
+            drawings.forEach(other => { if(other.x < minX) minX = other.x; });
+            d.x = minX - spacing; 
+        }
         d.el.style.transform = `translateX(${d.x}px)`;
       }
       requestAnimationFrame(animate);
@@ -53,17 +60,11 @@
         const msg = parts[1].trim();
         const user = e.data.split('!')[0].substring(1).toLowerCase();
 
-        // COMANDO: !dibujar
         if (msg.startsWith('!dibujar ')) {
           createDrawing(user, msg.split(' ')[1]);
-        } 
-        // COMANDO: !borrar <usuario>
-        else if (msg.startsWith('!borrar ')) {
-          const targetUser = msg.replace('!borrar ', '').replace('@', '').trim().toLowerCase();
-          removeUserDrawings(targetUser);
-        }
-        // COMANDO: !limpiar (solo tú o tus mods deberían poder, pero aquí es abierto)
-        else if (msg === '!limpiar') {
+        } else if (msg.startsWith('!borrar ')) {
+          removeUserDrawings(msg.replace('!borrar ', '').replace('@', '').trim().toLowerCase());
+        } else if (msg === '!limpiar') {
           clearAllDrawings();
         }
       }
@@ -81,8 +82,6 @@
         const bin = atob(b64);
         const itemEl = document.createElement('div');
         itemEl.className = 'item';
-        itemEl.dataset.user = user; // Guardamos el usuario para poder borrarlo luego
-        
         const grid = document.createElement('div');
         grid.className = 'grid';
 
@@ -100,27 +99,29 @@
         itemEl.appendChild(grid);
         document.getElementById('container').appendChild(itemEl);
 
-        let startX = -220;
+        // --- LÓGICA DE COLA SIN SUPERPOSICIÓN ---
+        let startX = -220; // Posición base (fuera a la izquierda)
+
         if (drawings.length > 0) {
-          const minX = Math.min(...drawings.map(d => d.x));
-          startX = minX - 250; 
+            // Buscamos el dibujo que esté más atrás (el valor X más bajo)
+            let minX = 0;
+            drawings.forEach(d => { if(d.x < minX) minX = d.x; });
+            // Lo ponemos detrás de ese dibujo respetando el spacing
+            startX = minX - spacing;
         }
+
         drawings.push({ el: itemEl, x: startX, user: user });
+
       } catch(err) {}
     }
 
-    // Función para borrar los dibujos de un usuario específico
     function removeUserDrawings(username) {
       drawings = drawings.filter(d => {
-        if (d.user === username) {
-          d.el.remove(); // Quitar del HTML
-          return false;  // Quitar de la lista de animación
-        }
+        if (d.user === username) { d.el.remove(); return false; }
         return true;
       });
     }
 
-    // Función para limpiar TODO
     function clearAllDrawings() {
       drawings.forEach(d => d.el.remove());
       drawings = [];
