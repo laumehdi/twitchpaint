@@ -33,21 +33,20 @@
       const grid = document.createElement('div');
       grid.className = 'grid';
 
-      // --- DESCOMPRESIÓN SEGURA ---
-      let pixels = [];
+      // DESCOMPRESIÓN RLE: Lee 1 hex de color y 2 hex de cantidad
+      let fullCode = "";
       for (let i = 0; i < data.code.length; i += 3) {
-        let colorIdx = parseInt(data.code[i], 16);
-        let count = parseInt(data.code.substring(i + 1, i + 3), 16);
-        for (let j = 0; j < count; j++) {
-          if (pixels.length < 256) pixels.push(colorIdx);
-        }
+        let colorChar = data.code[i];
+        let countHex = data.code.substring(i + 1, i + 3);
+        let count = parseInt(countHex, 16);
+        fullCode += colorChar.repeat(count);
       }
 
       for (let i = 0; i < 256; i++) {
+        let colorIdx = parseInt(fullCode[i] || "0", 16);
         const px = document.createElement('div');
         px.className = 'px';
-        let colorIdx = pixels[i] !== undefined ? pixels[i] : 0;
-        px.style.backgroundColor = colors[colorIdx];
+        px.style.backgroundColor = colors[colorIdx] || 'transparent';
         grid.appendChild(px);
       }
       
