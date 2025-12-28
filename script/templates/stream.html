@@ -5,28 +5,11 @@
   <title>Pixel Art Stream Overlay</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
   <style>
-    body { 
-      margin: 0; overflow: hidden; background: transparent; 
-      font-family: 'Segoe UI', sans-serif; width: 1920px; height: 1080px; 
-    }
-    #marquee {
-      display: flex; position: absolute; white-space: nowrap;
-      will-change: transform; animation: scroll-right 22s linear infinite;
-      align-items: flex-end; bottom: 20px; 
-    }
-    @keyframes scroll-right {
-      0% { transform: translateX(-100%); }
-      100% { transform: translateX(1920px); }
-    }
-    .item {
-      display: inline-flex; flex-direction: column; align-items: center;
-      margin-right: 40px; transition: opacity 0.2s;
-    }
-    .nick {
-      color: #ffffff; font-weight: bold; font-size: 18px; 
-      text-shadow: 2px 2px 0 #000; margin-bottom: 5px;
-      background: rgba(0, 0, 0, 0.5); padding: 1px 8px; border-radius: 4px;
-    }
+    body { margin: 0; overflow: hidden; background: transparent; font-family: 'Segoe UI', sans-serif; width: 1920px; height: 1080px; }
+    #marquee { display: flex; position: absolute; white-space: nowrap; will-change: transform; animation: scroll-right 22s linear infinite; align-items: flex-end; bottom: 20px; }
+    @keyframes scroll-right { 0% { transform: translateX(-100%); } 100% { transform: translateX(1920px); } }
+    .item { display: inline-flex; flex-direction: column; align-items: center; margin-right: 40px; }
+    .nick { color: #ffffff; font-weight: bold; font-size: 18px; text-shadow: 2px 2px 0 #000; margin-bottom: 5px; background: rgba(0, 0, 0, 0.5); padding: 1px 8px; border-radius: 4px; }
     .grid { display: grid; grid-template-columns: repeat(16, 12px); grid-template-rows: repeat(16, 12px); }
     .px { width: 12px; height: 12px; }
   </style>
@@ -36,7 +19,7 @@
   <script>
     const socket = io();
     const marquee = document.getElementById('marquee');
-    const colors = ['transparent','#000000','#800000','#008000','#808000','#000080','#800080','#008080','#c0c0c0','#808080','#ff0000','#00ff00','#ffff00','#0000ff','#ff00ff','#00ffff','#ffffff'];
+    const colors = ['transparent','#000000','#aa0000','#00aa00','#aa5500','#0000aa','#aa00aa','#00aaaa','#aaaaaa','#555555','#ff5555','#55ff55','#ffff55','#5555ff','#ff55ff','#55ffff','#ffffff'];
 
     socket.on('new_drawing', function(data) {
       const container = document.createElement('div');
@@ -62,16 +45,11 @@
       setTimeout(() => container.remove(), 300000);
     });
 
-    // Lógica de Moderación Instantánea
     socket.on('mod_action', function(data) {
       const items = document.querySelectorAll('.item');
-      
       if (data.type === 'delete_user') {
-        items.forEach(item => {
-          if (item.dataset.user === data.target) item.remove();
-        });
-      } 
-      else if (data.type === 'clear_all') {
+        items.forEach(item => { if (item.dataset.user === data.target) item.remove(); });
+      } else if (data.type === 'clear_all') {
         marquee.innerHTML = '';
       }
     });
