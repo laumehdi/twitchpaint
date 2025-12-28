@@ -4,44 +4,17 @@
   <meta charset="UTF-8">
   <title>Twitch Paint Overlay</title>
   <style>
-    body { 
-      margin: 0; background: transparent; overflow: hidden; 
-      width: 1920px; height: 1080px; display: flex; align-items: flex-start; 
-    }
-
-    #marquee { 
-      display: flex; flex-direction: row; white-space: nowrap; padding-top: 20px; width: 100%;
-    }
-    
-    .item { 
-      margin-left: 60px; display: flex; flex-direction: column; align-items: center; 
-      animation: scrollMove 15s linear infinite; will-change: transform;
-    }
-
-    @keyframes scrollMove {
-      from { transform: translateX(-300px); } 
-      to { transform: translateX(1920px); }    
-    }
-
-    .nick { 
-      color: white; font-family: 'Segoe UI', sans-serif; font-weight: bold; 
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.8); margin-bottom: 5px; 
-      background: rgba(0,0,0,0.7); padding: 2px 10px; border-radius: 4px; 
-    }
-
-    .grid { 
-      display: grid; grid-template-columns: repeat(16, 12px); grid-template-rows: repeat(16, 12px); 
-      background: transparent; 
-      padding: 0; /* CORREGIDO: Sin bordes ni padding en el stream */
-      border: none;
-    }
-
+    body { margin: 0; background: transparent; overflow: hidden; width: 1920px; height: 1080px; display: flex; align-items: flex-start; }
+    #marquee { display: flex; flex-direction: row; white-space: nowrap; padding-top: 20px; width: 100%; }
+    .item { margin-left: 60px; display: flex; flex-direction: column; align-items: center; animation: scrollMove 20s linear forwards; will-change: transform; }
+    @keyframes scrollMove { from { transform: translateX(-300px); } to { transform: translateX(2000px); } }
+    .nick { color: white; font-family: 'Segoe UI', sans-serif; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); margin-bottom: 5px; background: rgba(0,0,0,0.7); padding: 2px 10px; border-radius: 4px; }
+    .grid { display: grid; grid-template-columns: repeat(16, 12px); grid-template-rows: repeat(16, 12px); background: transparent; border: none; }
     .px { width: 12px; height: 12px; }
   </style>
 </head>
 <body>
   <div id="marquee"></div>
-
   <script>
     const CHANNEL = 'laumehdi';
     const colors = ['transparent','#000000','#aa0000','#00aa00','#aa5500','#0000aa','#aa00aa','#00aaaa','#aaaaaa','#555555','#ff5555','#55ff55','#ffff55','#5555ff','#ff55ff','#55ffff','#ffffff'];
@@ -82,21 +55,28 @@
 
       let pixels = [];
       try {
+        // Leemos en bloques exactos de 3 caracteres
         for (let i = 0; i < code.length; i += 3) {
           let colorIdx = parseInt(code[i], 16);
           let count = parseInt(code.substring(i + 1, i + 3), 16);
+          if (isNaN(colorIdx) || isNaN(count)) continue;
           for (let j = 0; j < count; j++) { if (pixels.length < 256) pixels.push(colorIdx); }
         }
         while(pixels.length < 256) pixels.push(0);
+
         pixels.forEach(idx => {
           const px = document.createElement('div');
           px.className = 'px';
-          px.style.backgroundColor = idx === 0 ? 'transparent' : colors[idx];
+          px.style.backgroundColor = (idx === 0 || !colors[idx]) ? 'transparent' : colors[idx];
           grid.appendChild(px);
         });
+
         container.innerHTML = `<div class="nick">${user}</div>`;
         container.appendChild(grid);
         marquee.appendChild(container);
+        
+        // Limpieza automática al terminar animación
+        setTimeout(() => container.remove(), 21000);
       } catch (e) { console.error(e); }
     }
 
