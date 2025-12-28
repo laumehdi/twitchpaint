@@ -2,212 +2,76 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Twitch Paint</title>
   <style>
-    :root {
-      /* Modo Claro por defecto */
-      --bg-color: #f0f2f5;
-      --text-color: #333333;
-      --container-bg: #ffffff;
-      --border-color: #cccccc;
-      --input-bg: #ffffff;
-      --header-bg: rgba(0,0,0,0.05);
-    }
+    :root { --bg-color: #f0f2f5; --text-color: #333333; --border-color: #cccccc; --input-bg: #ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg-color: #1a1a1a; --text-color: #f0f0f0; --border-color: #444444; --input-bg: #2d2d2d; } }
+    
+    body { font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: var(--bg-color); color: var(--text-color); }
 
-    /* Modo Oscuro Automático */
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg-color: #1a1a1a;
-        --text-color: #f0f0f0;
-        --container-bg: #2d2d2d;
-        --border-color: #444444;
-        --input-bg: #3d3d3d;
-        --header-bg: rgba(255,255,255,0.1);
-      }
-    }
-
-    body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      margin: 0;
-      background: var(--bg-color);
-      color: var(--text-color);
-      transition: all 0.3s ease;
-    }
-
-    .ui-header {
-      display: flex;
-      gap: 15px;
-      align-items: center;
-      margin-bottom: 25px;
-      background: var(--header-bg);
-      padding: 12px 25px;
-      border-radius: 50px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-
-    select {
-      padding: 8px 15px;
-      border-radius: 20px;
-      border: 1px solid var(--border-color);
-      background: var(--input-bg);
-      color: var(--text-color);
-      outline: none;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    .grid-container {
-      /* Fondo de transparencia PNG (checkerboard) */
-      background-color: #ffffff;
+    /* RESTAURADO: Patrón de transparencia PNG completo */
+    .grid-container { 
+      background-color: #ffffff; 
       background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), 
                         linear-gradient(-45deg, #ccc 25%, transparent 25%), 
                         linear-gradient(45deg, transparent 75%, #ccc 75%), 
-                        linear-gradient(-45deg, transparent 75%, #ccc 75%);
-      background-size: 20px 20px;
+                        linear-gradient(-45deg, transparent 75%, #ccc 75%); 
+      background-size: 20px 20px; 
       background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-      
-      padding: 10px;
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-      margin-bottom: 25px;
+      padding: 10px; 
+      border-radius: 12px; 
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
+      margin-bottom: 25px; 
     }
 
-    #grid {
-      display: grid;
-      grid-template-columns: repeat(16, 20px);
-      grid-template-rows: repeat(16, 20px);
-      gap: 1px;
-      background: rgba(0,0,0,0.1);
-    }
-
-    .cell {
-      width: 20px;
-      height: 20px;
-      background: transparent;
-      cursor: crosshair;
-    }
-
-    .palette {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      width: 360px;
-      justify-content: center;
-      margin-bottom: 25px;
-      padding: 12px;
-      background: var(--header-bg);
-      border-radius: 12px;
-    }
-
-    .p-color {
-      width: 32px;
-      height: 32px;
-      cursor: pointer;
-      border: 2px solid transparent;
-      border-radius: 8px;
-      transition: transform 0.1s;
-    }
-
-    .p-color.selected {
-      border-color: var(--text-color);
-      transform: scale(1.15);
-      box-shadow: 0 0 8px rgba(0,0,0,0.3);
-    }
-
-    /* Estilo para el botón de borrar en la paleta */
-    .p-transparent {
-      background-color: #ffffff;
-      background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), 
-                        linear-gradient(-45deg, #ccc 25%, transparent 25%), 
-                        linear-gradient(45deg, transparent 75%, #ccc 75%), 
-                        linear-gradient(-45deg, transparent 75%, #ccc 75%);
-      background-size: 8px 8px;
+    #grid { display: grid; grid-template-columns: repeat(16, 20px); grid-template-rows: repeat(16, 20px); gap: 1px; background: rgba(0,0,0,0.1); }
+    .cell { width: 20px; height: 20px; background: transparent; cursor: crosshair; }
+    
+    .palette { display: flex; gap: 6px; flex-wrap: wrap; width: 360px; justify-content: center; margin-bottom: 25px; padding: 12px; background: rgba(0,0,0,0.05); border-radius: 12px; }
+    .p-color { width: 32px; height: 32px; cursor: pointer; border: 2px solid transparent; border-radius: 8px; transition: transform 0.1s; }
+    .p-color.selected { border-color: var(--text-color); transform: scale(1.15); }
+    
+    /* Patrón para el color transparente en la paleta */
+    .p-transparent { 
+      background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%),
+                        linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%); 
+      background-size: 8px 8px; 
       background-position: 0 0, 0 4px, 4px -4px, -4px 0px;
+      background-color: white; 
     }
 
-    .controls {
-      display: flex;
-      gap: 15px;
-    }
-
-    button {
-      padding: 12px 28px;
-      cursor: pointer;
-      border: none;
-      border-radius: 10px;
-      font-weight: bold;
-      transition: all 0.2s;
-      color: white;
-      text-transform: uppercase;
-    }
-
+    .controls { display: flex; gap: 15px; }
+    button { padding: 12px 28px; cursor: pointer; border: none; border-radius: 10px; font-weight: bold; color: white; transition: opacity 0.2s; text-transform: uppercase; }
+    button:hover { opacity: 0.8; }
     .btn-clear { background: #e74c3c; }
     .btn-gen { background: #2ecc71; }
-
-    .output-container {
-      margin-top: 25px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
+    
+    .output-wrapper { margin-top: 20px; display: flex; flex-direction: column; align-items: center; }
+    #output { 
+      width: 420px; padding: 15px; border: 2px solid var(--border-color); 
+      border-radius: 10px; background: var(--input-bg); color: var(--text-color); 
+      text-align: center; cursor: pointer; font-family: monospace; font-size: 14px;
+      transition: all 0.3s ease; outline: none;
     }
-
-    #output {
-      width: 400px;
-      padding: 15px;
-      border: 2px solid var(--border-color);
-      border-radius: 10px;
-      background: var(--input-bg);
-      color: var(--text-color);
-      font-family: monospace;
-      text-align: center;
+    #output.copied { 
+      border-color: #2ecc71; background: #d4edda; color: #155724; 
+      transform: scale(1.02); font-weight: bold;
     }
-
-    #copy-hint { color: #2ecc71; font-weight: bold; opacity: 0; }
   </style>
 </head>
 <body>
-
-  <div class="ui-header">
-    <label>🎨 Tema:</label>
-    <select id="theme-select" onchange="updateTheme()">
-      <option value="linux">Linux ANSI</option>
-      <option value="dracula">Dracula</option>
-      <option value="gruvbox">Gruvbox</option>
-      <option value="monokai">Monokai</option>
-      <option value="catppuccin">Catppuccin</option>
-    </select>
-  </div>
-
   <div class="grid-container"><div id="grid"></div></div>
   <div class="palette" id="palette"></div>
-
   <div class="controls">
     <button class="btn-clear" onclick="clearGrid()">Borrar Todo</button>
     <button class="btn-gen" onclick="generateCode()">Generar Código</button>
   </div>
-
-  <div class="output-container">
-    <div id="copy-hint">¡Copiado!</div>
-    <input type="text" id="output" readonly placeholder="!pintar ..." onclick="copyToClipboard()">
+  <div class="output-wrapper">
+    <input type="text" id="output" readonly placeholder="Primero dibuja y pulsa 'Generar'" onclick="copyToClipboard()">
   </div>
 
   <script>
-    const themes = {
-      linux: ['transparent','#000000','#aa0000','#00aa00','#aa5500','#0000aa','#aa00aa','#00aaaa','#aaaaaa','#555555','#ff5555','#55ff55','#ffff55','#5555ff','#ff55ff','#55ffff','#ffffff'],
-      dracula: ['transparent','#282a36','#ff5555','#50fa7b','#f1fa8c','#bd93f9','#ff79c6','#8be9fd','#f8f8f2','#44475a','#ff6e6e','#69ff94','#ffffa5','#d6acff','#ff92df','#a4ffff','#ffffff'],
-      gruvbox: ['transparent','#282828','#cc241d','#98971a','#d79921','#458588','#b16286','#689d6a','#a89984','#928374','#fb4934','#b8bb26','#fabd2f','#83a598','#d3869b','#8ec07c','#ebdbb2'],
-      monokai: ['transparent','#272822','#f92672','#a6e22e','#f4bf75','#66d9ef','#ae81ff','#a1efe4','#f8f8f2','#383830','#f92672','#a6e22e','#fd971f','#66d9ef','#ae81ff','#a1efe4','#ffffff'],
-      catppuccin: ['transparent','#1e1e2e','#f38ba8','#a6e3a1','#f9e2af','#89b4fa','#cba6f7','#94e2d5','#bac2de','#313244','#eba0ac','#a6e3a1','#f9e2af','#89dceb','#f5c2e7','#94e2d5','#cdd6f4']
-    };
-
-    let currentTheme = 'linux';
+    const colors = ['transparent','#000000','#aa0000','#00aa00','#aa5500','#0000aa','#aa00aa','#00aaaa','#aaaaaa','#555555','#ff5555','#55ff55','#ffff55','#5555ff','#ff55ff','#55ffff','#ffffff'];
     let selectedIdx = 1;
     let isDrawing = false;
     const cells = [];
@@ -229,8 +93,8 @@
 
     function renderPalette() {
       const paletteDiv = document.getElementById('palette');
-      paletteDiv.innerHTML = '';
-      themes[currentTheme].forEach((c, i) => {
+      paletteDiv.innerHTML = ''; // Limpiar para evitar duplicados
+      colors.forEach((c, i) => {
         const btn = document.createElement('div');
         btn.className = 'p-color' + (i === selectedIdx ? ' selected' : '');
         if (i === 0) btn.classList.add('p-transparent');
@@ -242,38 +106,39 @@
         };
         paletteDiv.appendChild(btn);
       });
-      cells.forEach(cell => paint(cell, true));
     }
 
-    function paint(cell, refreshOnly = false) {
-      if (!refreshOnly) cell.dataset.idx = selectedIdx;
-      const idx = parseInt(cell.dataset.idx);
-      cell.style.backgroundColor = idx === 0 ? 'transparent' : themes[currentTheme][idx];
-    }
-
-    function updateTheme() {
-      currentTheme = document.getElementById('theme-select').value;
-      renderPalette();
+    function paint(cell) {
+      cell.dataset.idx = selectedIdx;
+      cell.style.backgroundColor = selectedIdx === 0 ? 'transparent' : colors[selectedIdx];
     }
 
     function generateCode() {
       const code = cells.map(c => parseInt(c.dataset.idx).toString(16)).join('');
-      document.getElementById('output').value = "!draw " + code;
-      document.getElementById('copy-hint').style.opacity = "1";
+      document.getElementById('output').value = "!dibujar " + code;
+      document.getElementById('output').classList.remove('copied');
     }
 
     function copyToClipboard() {
       const out = document.getElementById('output');
-      if (!out.value) return;
+      if (!out.value || !out.value.startsWith('!dibujar')) return;
+      
+      const originalValue = out.value;
       out.select();
       document.execCommand("copy");
-      document.getElementById('copy-hint').innerText = "¡Copiado con éxito! ✅";
-      setTimeout(() => { document.getElementById('copy-hint').style.opacity = "0"; }, 2000);
+      
+      out.classList.add('copied');
+      out.value = "¡Copiado con éxito! ✅";
+      
+      setTimeout(() => {
+        out.classList.remove('copied');
+        out.value = originalValue;
+      }, 2000);
     }
 
     function clearGrid() {
-      if (confirm("¿Borrar dibujo?")) {
-        cells.forEach(c => { c.dataset.idx = "0"; paint(c, true); });
+      if (confirm("¿Borrar todo?")) {
+        cells.forEach(c => { c.dataset.idx = "0"; c.style.backgroundColor = 'transparent'; });
         document.getElementById('output').value = "";
       }
     }
