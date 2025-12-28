@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Editor de Pixeles - Paleta Linux</title>
+  <title>Editor de Pixeles - Checkerboard</title>
   <style>
     :root { --bg-color: #f0f2f5; --text-color: #333; }
     body { font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: var(--bg-color); color: var(--text-color); }
@@ -11,7 +11,7 @@
       border: 4px solid #000; 
       box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
       margin-bottom: 20px; 
-      line-height: 0; 
+      line-height: 0;
       background-color: #fff;
     }
 
@@ -19,18 +19,24 @@
       display: grid; 
       grid-template-columns: repeat(16, 25px); 
       grid-template-rows: repeat(16, 25px); 
-      /* Fondo de tablero para los transparentes */
-      background-image: linear-gradient(45deg, #eee 25%, transparent 25%), linear-gradient(-45deg, #eee 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #eee 75%), linear-gradient(-45deg, transparent 75%, #eee 75%);
-      background-size: 20px 20px;
+      /* PATRÓN AJEDREZ CLÁSICO (Checkerboard) */
+      background-color: #ffffff;
+      background-image: 
+        linear-gradient(45deg, #eee 25%, transparent 25%), 
+        linear-gradient(-45deg, #eee 25%, transparent 25%), 
+        linear-gradient(45deg, transparent 75%, #eee 75%), 
+        linear-gradient(-45deg, transparent 75%, #eee 75%);
+      background-size: 20px 20px; /* Tamaño de los cuadraditos del fondo */
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
     }
 
     .cell { 
       width: 25px; 
       height: 25px; 
       cursor: crosshair; 
-      /* LINEA SUTIL: Borde gris muy suave */
       box-sizing: border-box;
-      border: 0.5px solid rgba(0, 0, 0, 0.08); 
+      /* Línea sutil gris suave entre pixeles */
+      border: 0.5px solid rgba(0, 0, 0, 0.05); 
     }
 
     .palette { display: flex; gap: 6px; flex-wrap: wrap; width: 360px; justify-content: center; margin-bottom: 20px; padding: 10px; background: rgba(0,0,0,0.05); border-radius: 12px; }
@@ -96,7 +102,11 @@
 
     function clearCanvas() {
       if(confirm("¿Borrar dibujo?")) {
-        cells.forEach(c => { c.dataset.idx = "0"; c.style.backgroundColor = "transparent"; });
+        cells.forEach(c => { 
+          c.dataset.idx = "0"; 
+          c.style.backgroundColor = "transparent"; 
+        });
+        document.getElementById('output').value = "";
       }
     }
 
@@ -122,7 +132,10 @@
         const oldVal = out.value;
         out.classList.add('copied-success');
         out.value = "¡Copiado!";
-        setTimeout(() => { out.classList.remove('copied-success'); out.value = oldVal; }, 1000);
+        setTimeout(() => { 
+          out.classList.remove('copied-success'); 
+          out.value = oldVal; 
+        }, 1000);
       } catch (err) { out.select(); document.execCommand('copy'); }
     }
   </script>
