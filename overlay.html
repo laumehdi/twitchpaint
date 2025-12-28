@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Overlay de Dibujos - Mayor Velocidad</title>
+  <title>Overlay de Dibujos - Nombres más grandes</title>
   <style>
     body { 
       margin: 0; 
@@ -29,11 +29,13 @@
       font-family: 'Segoe UI', sans-serif; 
       font-weight: bold; 
       text-shadow: 2px 2px 4px #000; 
-      margin-bottom: 4px; 
+      margin-bottom: 6px; 
       background: rgba(0,0,0,0.8); 
-      padding: 2px 10px; 
-      border-radius: 4px; 
-      font-size: 15px;
+      /* Ajuste de padding para acompañar el tamaño */
+      padding: 3px 14px; 
+      border-radius: 5px; 
+      /* PUNTO SOLICITADO: Nombre un poquito más grande */
+      font-size: 18px; 
       white-space: nowrap;
     }
     .grid { 
@@ -51,9 +53,8 @@
     const CHANNEL = 'laumehdi'; 
     const colors = ['transparent','#000000','#aa0000','#00aa00','#aa5500','#0000aa','#aa00aa','#00aaaa','#aaaaaa','#555555','#ff5555','#55ff55','#ffff55','#5555ff','#ff55ff','#55ffff','#ffffff'];
     
-    // --- AJUSTE DE VELOCIDAD ---
-    const speed = 3.5; // Antes era 2, ahora 3.5 para mayor fluidez
-    const spacing = 300; // Aumentamos un pelín el espacio por la velocidad
+    const speed = 3.5; 
+    const spacing = 300; 
     let drawings = [];
 
     function animate() {
@@ -61,7 +62,6 @@
         const d = drawings[i];
         d.x += speed;
         
-        // Loop infinito
         if (d.x > 1920) {
             let minX = 0;
             drawings.forEach(other => { if(other.x < minX) minX = other.x; });
