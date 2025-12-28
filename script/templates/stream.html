@@ -32,13 +32,24 @@
       
       const grid = document.createElement('div');
       grid.className = 'grid';
+
+      // DESCOMPRESIÓN RLE: Lee 1 hex de color y 2 hex de cantidad
+      let fullCode = "";
+      for (let i = 0; i < data.code.length; i += 3) {
+        let colorChar = data.code[i];
+        let countHex = data.code.substring(i + 1, i + 3);
+        let count = parseInt(countHex, 16);
+        fullCode += colorChar.repeat(count);
+      }
+
       for (let i = 0; i < 256; i++) {
-        let colorIdx = parseInt(data.code[i] || "0", 16);
+        let colorIdx = parseInt(fullCode[i] || "0", 16);
         const px = document.createElement('div');
         px.className = 'px';
         px.style.backgroundColor = colors[colorIdx] || 'transparent';
         grid.appendChild(px);
       }
+      
       container.appendChild(nickTag);
       container.appendChild(grid);
       marquee.appendChild(container);
