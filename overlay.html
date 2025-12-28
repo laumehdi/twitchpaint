@@ -6,8 +6,8 @@
   <style>
     body { margin: 0; background: transparent; overflow: hidden; width: 1920px; height: 1080px; display: flex; align-items: flex-start; }
     #marquee { display: flex; flex-direction: row; white-space: nowrap; padding-top: 20px; width: 100%; }
-    .item { margin-left: 60px; display: flex; flex-direction: column; align-items: center; animation: scrollMove 20s linear forwards; will-change: transform; }
-    @keyframes scrollMove { from { transform: translateX(-300px); } to { transform: translateX(2000px); } }
+    .item { margin-left: 60px; display: flex; flex-direction: column; align-items: center; animation: scrollMove 25s linear forwards; will-change: transform; }
+    @keyframes scrollMove { from { transform: translateX(-400px); } to { transform: translateX(2100px); } }
     .nick { color: white; font-family: 'Segoe UI', sans-serif; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); margin-bottom: 5px; background: rgba(0,0,0,0.7); padding: 2px 10px; border-radius: 4px; }
     .grid { display: grid; grid-template-columns: repeat(16, 12px); grid-template-rows: repeat(16, 12px); background: transparent; border: none; }
     .px { width: 12px; height: 12px; }
@@ -55,9 +55,9 @@
 
       let pixels = [];
       try {
-        // Leemos en bloques exactos de 3 caracteres
         for (let i = 0; i < code.length; i += 3) {
-          let colorIdx = parseInt(code[i], 16);
+          // LEEMOS COLOR EN BASE 36 (1 char)
+          let colorIdx = parseInt(code[i], 36);
           let count = parseInt(code.substring(i + 1, i + 3), 16);
           if (isNaN(colorIdx) || isNaN(count)) continue;
           for (let j = 0; j < count; j++) { if (pixels.length < 256) pixels.push(colorIdx); }
@@ -75,8 +75,7 @@
         container.appendChild(grid);
         marquee.appendChild(container);
         
-        // Limpieza automática al terminar animación
-        setTimeout(() => container.remove(), 21000);
+        setTimeout(() => container.remove(), 26000);
       } catch (e) { console.error(e); }
     }
 
