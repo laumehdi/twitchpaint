@@ -41,8 +41,7 @@ def twitch_bot():
                         socketio.emit('mod_action', {'type': 'delete_user', 'target': target})
                     elif msg == "!limpiar":
                         socketio.emit('mod_action', {'type': 'clear_all'})
-        except:
-            pass
+        except: pass
 
 @app.route('/')
 def index():
