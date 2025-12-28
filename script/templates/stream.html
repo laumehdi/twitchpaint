@@ -1,1 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Pixel Art Stream Overlay</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+  <style>
+    body { 
+      margin: 0; overflow: hidden; background: transparent; 
+      font-family: 'Segoe UI', sans-serif; width: 1920px; height: 1080px; 
+    }
+    #marquee {
+      display: flex; position: absolute; white-space: nowrap;
+      will-change: transform; animation: scroll-right 22s linear infinite;
+      align-items: flex-end; bottom: 20px; 
+    }
+    @keyframes scroll-right {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(1920px); }
+    }
+    .item {
+      display: inline-flex; flex-direction: column; align-items: center;
+      margin-right: 40px; transition: opacity 0.2s;
+    }
+    .nick {
+      color: #ffffff; font-weight: bold; font-size: 18px; 
+      text-shadow: 2px 2px 0 #000; margin-bottom: 5px;
+      background: rgba(0, 0, 0, 0.5); padding: 1px 8px; border-radius: 4px;
+    }
+    .grid { display: grid; grid-template-columns: repeat(16, 12px); grid-template-rows: repeat(16, 12px); }
+    .px { width: 12px; height: 12px; }
+  </style>
+</head>
+<body>
+  <div id="marquee"></div>
+  <script>
+    const socket = io();
+    const marquee = document.getElementById('marquee');
+    const colors = ['transparent','#000000','#800000','#008000','#808000','#000080','#800080','#008080','#c0c0c0','#808080','#ff0000','#00ff00','#ffff00','#0000ff','#ff00ff','#00ffff','#ffffff'];
 
+    socket.on('new_drawing', function(data) {
+      const container = document.createElement('div');
+      container.className = 'item';
+      container.dataset.user = data.user.toLowerCase();
+      
+      const nickTag = document.createElement('div');
+      nickTag.className = 'nick';
+      nickTag.innerText = data.user;
+      
+      const grid = document.createElement('div');
+      grid.className = 'grid';
+      for (let i = 0; i < 256; i++) {
+        let colorIdx = parseInt(data.code[i] || "0", 16);
+        const px = document.createElement('div');
+        px.className = 'px';
+        px.style.backgroundColor = colors[colorIdx] || 'transparent';
+        grid.appendChild(px);
+      }
+      container.appendChild(nickTag);
+      container.appendChild(grid);
+      marquee.appendChild(container);
+      setTimeout(() => container.remove(), 300000);
+    });
+
+    // Lógica de Moderación Instantánea
+    socket.on('mod_action', function(data) {
+      const items = document.querySelectorAll('.item');
+      
+      if (data.type === 'delete_user') {
+        items.forEach(item => {
+          if (item.dataset.user === data.target) item.remove();
+        });
+      } 
+      else if (data.type === 'clear_all') {
+        marquee.innerHTML = '';
+      }
+    });
+  </script>
+</body>
+</html>
