@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Twitch Paint - Generador</title>
+  <title>Twitch Paint - Comprimido</title>
   <style>
     :root { --bg-color: #f0f2f5; --text-color: #333333; --border-color: #cccccc; --input-bg: #ffffff; }
     @media (prefers-color-scheme: dark) { :root { --bg-color: #1a1a1a; --text-color: #f0f0f0; --border-color: #444444; --input-bg: #2d2d2d; } }
@@ -57,6 +57,7 @@
 
     function renderPalette() {
       const paletteDiv = document.getElementById('palette');
+      paletteDiv.innerHTML = '';
       colors.forEach((c, i) => {
         const btn = document.createElement('div');
         btn.className = 'p-color' + (i === selectedIdx ? ' selected' : '');
@@ -76,6 +77,7 @@
       cell.style.backgroundColor = selectedIdx === 0 ? 'transparent' : colors[selectedIdx];
     }
 
+    // NUEVA FUNCIÓN CON COMPRESIÓN
     function generateCode() {
       let compressed = "";
       let count = 1;
@@ -118,3 +120,4 @@
   </script>
 </body>
 </html>
+
