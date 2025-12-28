@@ -2,20 +2,41 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Editor de Pixeles</title>
+  <title>Editor de Pixeles - Paleta Linux</title>
   <style>
     :root { --bg-color: #f0f2f5; --text-color: #333; }
     body { font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: var(--bg-color); color: var(--text-color); }
-    .grid-container { border: 4px solid #000; box-shadow: 0 10px 25px rgba(0,0,0,0.2); margin-bottom: 20px; line-height: 0; }
-    #grid { 
-      display: grid; grid-template-columns: repeat(16, 25px); grid-template-rows: repeat(16, 25px); 
-      background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%);
-      background-size: 20px 20px; background-color: white;
+    
+    .grid-container { 
+      border: 4px solid #000; 
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
+      margin-bottom: 20px; 
+      line-height: 0; 
+      background-color: #fff;
     }
-    .cell { width: 25px; height: 25px; cursor: crosshair; }
+
+    #grid { 
+      display: grid; 
+      grid-template-columns: repeat(16, 25px); 
+      grid-template-rows: repeat(16, 25px); 
+      /* Fondo de tablero para los transparentes */
+      background-image: linear-gradient(45deg, #eee 25%, transparent 25%), linear-gradient(-45deg, #eee 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #eee 75%), linear-gradient(-45deg, transparent 75%, #eee 75%);
+      background-size: 20px 20px;
+    }
+
+    .cell { 
+      width: 25px; 
+      height: 25px; 
+      cursor: crosshair; 
+      /* LINEA SUTIL: Borde gris muy suave */
+      box-sizing: border-box;
+      border: 0.5px solid rgba(0, 0, 0, 0.08); 
+    }
+
     .palette { display: flex; gap: 6px; flex-wrap: wrap; width: 360px; justify-content: center; margin-bottom: 20px; padding: 10px; background: rgba(0,0,0,0.05); border-radius: 12px; }
     .p-color { width: 32px; height: 32px; cursor: pointer; border: 2px solid transparent; border-radius: 8px; }
     .p-color.selected { border-color: #000; transform: scale(1.1); }
+    
     .p-transparent { background: white !important; position: relative; border: 1px solid #ccc; overflow: hidden;}
     .p-transparent::after { content: ''; position: absolute; width: 140%; height: 2px; background: red; transform: rotate(45deg); top: 14px; left: -5px; }
     
@@ -23,13 +44,7 @@
     .btn-generate { background: #9146ff; }
     .btn-clear { background: #ff4646; }
     
-    /* El input de salida */
-    #output { 
-      width: 450px; padding: 15px; border: 2px solid #000; border-radius: 10px; 
-      text-align: center; font-family: monospace; cursor: pointer; background: white; 
-      transition: all 0.2s ease;
-    }
-    #output:hover { background: #f9f9f9; border-color: #9146ff; }
+    #output { width: 450px; padding: 15px; border: 2px solid #000; border-radius: 10px; text-align: center; font-family: monospace; cursor: pointer; background: white; transition: all 0.2s; }
     .copied-success { background: #d4ffda !important; border-color: #27ae60 !important; color: #1e8449 !important; }
   </style>
 </head>
@@ -40,7 +55,7 @@
     <button class="btn-clear" onclick="clearCanvas()">Limpiar</button>
     <button class="btn-generate" onclick="generateCode()">Generar</button>
   </div>
-  <input type="text" id="output" readonly onclick="copyToClipboard()" placeholder="Haz clic aquí para copiar el código">
+  <input type="text" id="output" readonly onclick="copyToClipboard()" placeholder="Haz clic para copiar">
 
   <script>
     const colors = ['transparent','#000000','#aa0000','#00aa00','#aa5500','#0000aa','#aa00aa','#00aaaa','#aaaaaa','#555555','#ff5555','#55ff55','#ffff55','#5555ff','#ff55ff','#55ffff','#ffffff'];
@@ -49,7 +64,6 @@
     const cells = [];
     const grid = document.getElementById('grid');
 
-    // Inicializar grid
     for (let i = 0; i < 256; i++) {
       const cell = document.createElement('div');
       cell.className = 'cell';
@@ -61,7 +75,6 @@
     }
     window.onmouseup = () => isDrawing = false;
 
-    // Inicializar paleta
     const pal = document.getElementById('palette');
     colors.forEach((c, i) => {
       const b = document.createElement('div');
@@ -84,49 +97,33 @@
     function clearCanvas() {
       if(confirm("¿Borrar dibujo?")) {
         cells.forEach(c => { c.dataset.idx = "0"; c.style.backgroundColor = "transparent"; });
-        document.getElementById('output').value = "";
       }
     }
 
-    // Solo genera el texto, no copia
     function generateCode() {
       const pixelData = cells.map(c => parseInt(c.dataset.idx));
       const usedColors = [...new Set(pixelData)].sort((a,b) => a-b);
       const buffer = new Uint8Array(128);
-      
       for (let i = 0; i < 256; i += 2) {
         const high = usedColors.indexOf(pixelData[i]);
         const low = usedColors.indexOf(pixelData[i+1]);
         buffer[i/2] = (high << 4) | (low & 0x0F);
       }
-
       const b64 = btoa(String.fromCharCode(...buffer));
       const header = usedColors.map(c => c.toString(16)).join('');
       document.getElementById('output').value = "!dibujar " + header + "_" + b64;
     }
 
-    // Esta es la función que copia al hacer clic en el casillero
     async function copyToClipboard() {
       const out = document.getElementById('output');
       if (!out.value || out.value === "¡Copiado!") return;
-
       try {
         await navigator.clipboard.writeText(out.value);
-        
-        // Efecto visual silencioso
-        const originalValue = out.value;
+        const oldVal = out.value;
         out.classList.add('copied-success');
         out.value = "¡Copiado!";
-        
-        setTimeout(() => {
-          out.classList.remove('copied-success');
-          out.value = originalValue;
-        }, 1000);
-      } catch (err) {
-        // Fallback
-        out.select();
-        document.execCommand('copy');
-      }
+        setTimeout(() => { out.classList.remove('copied-success'); out.value = oldVal; }, 1000);
+      } catch (err) { out.select(); document.execCommand('copy'); }
     }
   </script>
 </body>
