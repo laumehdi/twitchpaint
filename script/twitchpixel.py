@@ -26,28 +26,22 @@ def twitch_bot():
                 irc.send("PONG\r\n".encode('utf-8'))
                 continue
             
-            # Buscamos el usuario y el mensaje
             match = re.search(r':(.*?)!.*?PRIVMSG #.*? :(.*)', resp)
             if match:
                 user = match.group(1).lower()
                 msg = match.group(2).strip()
 
-                # 1. COMANDO !draw (Cualquiera)
-                if msg.startswith("!draw "):
-                    draw_code = msg.replace("!draw ", "").strip()
+                # Detectamos comando !dibujar
+                if msg.startswith("!dibujar "):
+                    draw_code = msg.replace("!dibujar ", "").strip()
                     socketio.emit('new_drawing', {'user': user, 'code': draw_code})
 
-                # COMANDOS DE MODERACIÓN (Solo tú)
+                # Moderación
                 if user == CHANNEL:
-                    # 2. !borrar <nick>
                     if msg.startswith("!borrar "):
                         target = msg.replace("!borrar ", "").strip().lower().replace('@', '')
-                        print(f"Borrando a: {target}")
                         socketio.emit('mod_action', {'type': 'delete_user', 'target': target})
-                    
-                    # 3. !limpiar
                     elif msg == "!limpiar":
-                        print("Limpiando toda la pantalla")
                         socketio.emit('mod_action', {'type': 'clear_all'})
         except:
             pass
@@ -58,4 +52,4 @@ def index():
 
 if __name__ == '__main__':
     threading.Thread(target=twitch_bot, daemon=True).start()
-    socketio.run(app, host='0.0.0.0', port=5000)
+    socketio.run(app, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True)
