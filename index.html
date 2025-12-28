@@ -90,8 +90,8 @@
           count++;
           i++;
         }
-        // Asegura 1 char para color y 2 para cantidad (hex)
-        compressed += colorIdx.toString(16) + count.toString(16).padStart(2, '0');
+        // USAMOS BASE 36 PARA EL COLOR (1 caracter para índices 0-35)
+        compressed += colorIdx.toString(36) + count.toString(16).padStart(2, '0');
       }
       document.getElementById('output').value = "!dibujar " + compressed;
     }
