@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Overlay Sub VIP con Cola - laumehdi</title>
+  <title>Overlay Sub VIP Queue Final - laumehdi</title>
   <style>
     body { margin: 0; background: transparent; overflow: hidden; width: 1920px; height: 1080px; }
     #container { position: relative; width: 100%; height: 100%; }
@@ -18,38 +18,44 @@
       image-rendering: crisp-edges;
     }
 
-    @keyframes subDance {
-      0% { transform: rotate(0deg) scale(1); }
-      25% { transform: rotate(5deg) scale(1.05); }
-      50% { transform: rotate(-5deg) scale(1); }
-      75% { transform: rotate(5deg) scale(1.05); }
-      100% { transform: rotate(0deg) scale(1); }
+    /* Animación de baile: ahora más enérgica para el showcase */
+    @keyframes superDance {
+      0% { transform: translate(-50%, -50%) scale(4) rotate(0deg); }
+      25% { transform: translate(-50%, -52%) scale(4.1) rotate(4deg); }
+      50% { transform: translate(-50%, -50%) scale(4) rotate(-4deg); }
+      75% { transform: translate(-50%, -48%) scale(4.1) rotate(4deg); }
+      100% { transform: translate(-50%, -50%) scale(4) rotate(0deg); }
     }
 
-    .sub-active { z-index: 999; filter: drop-shadow(0 0 12px gold) drop-shadow(0 0 5px orange); }
-    .sub-active .grid { animation: subDance 1s infinite ease-in-out; }
+    /* Estilo VIP permanente para Subs */
+    .sub-active { 
+      z-index: 999; 
+      filter: drop-shadow(0 0 12px gold) drop-shadow(0 0 5px orange); 
+    }
 
-    /* Estado de Showcase */
+    /* EL BAILE: Solo ocurre cuando tiene la clase 'showcase' */
     .showcase {
       position: fixed !important;
       top: 50% !important;
       left: 50% !important;
-      transform: translate(-50%, -50%) scale(4) !important;
       z-index: 10000 !important;
+      animation: superDance 1s infinite ease-in-out !important;
     }
-
-    /* Ocultar temporalmente los dibujos de subs que están en la cola de espera */
-    .waiting { display: none; }
 
     .nick { 
       color: white; font-family: 'Arial Black', sans-serif; font-weight: 900; 
       margin-top: 2px; font-size: 25px; 
       text-shadow: -1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000, 2px 2px 5px rgba(0,0,0,0.8);
     }
+
+    /* La estrella se mantiene siempre para los subs */
     .sub-active .nick::before { content: '⭐ '; color: gold; }
 
     .grid { display: grid; grid-template-columns: repeat(16, 12px); grid-template-rows: repeat(16, 12px); }
     .px { width: 13px; height: 13px; margin-right: -1px; margin-bottom: -1px; shape-rendering: crispEdges; }
+
+    /* Ocultar en cola */
+    .waiting { display: none; }
   </style>
 </head>
 <body>
@@ -65,8 +71,8 @@
     const layerSpeedNuances = [1.0, 2.0, 1.3, 1.7, 1.1, 1.9];
 
     let drawings = [];
-    let subQueue = []; // Cola de espera para suscriptores
-    let isShowcaseBusy = false; // Indica si hay alguien bailando ahora
+    let subQueue = [];
+    let isShowcaseBusy = false;
 
     function animate() {
       drawings.forEach((d, index) => {
@@ -115,9 +121,15 @@
         if (msg.startsWith('!dibujar ')) {
           createDrawing(user, msg.split(' ')[1], isSub);
         } 
-        else if (msg.startsWith('!borrar') || msg === '!limpiartodo') {
-           // (Lógica de borrado omitida por brevedad, se mantiene igual)
-           if(msg === '!limpiartodo' && isAdmin) { drawings.forEach(d => d.el.remove()); drawings = []; subQueue = []; isShowcaseBusy = false; }
+        else if (msg === '!limpiartodo' && isAdmin) {
+            drawings.forEach(d => d.el.remove());
+            drawings = [];
+            subQueue = [];
+            isShowcaseBusy = false;
+        }
+        else if (msg.startsWith('!borrar')) {
+          const target = msg.replace('!borrar', '').replace('@', '').trim().toLowerCase();
+          removeLastFromUser(isAdmin ? (target || user) : user);
         }
       }
     };
@@ -135,7 +147,7 @@
         itemEl.className = 'item';
         if (isSub) {
           itemEl.classList.add('sub-active');
-          itemEl.classList.add('waiting'); // Entra oculto a la fila
+          itemEl.classList.add('waiting');
         }
 
         const grid = document.createElement('div');
@@ -158,9 +170,7 @@
         document.getElementById('container').appendChild(itemEl);
 
         const drawingObj = { 
-          el: itemEl, 
-          x: -300, 
-          user: user, 
+          el: itemEl, x: -300, user: user, 
           scale: 0.85 + (Math.random() * 0.3), 
           offsetY: (Math.random() * 50) - 25,
           isSub: isSub 
@@ -175,36 +185,31 @@
     }
 
     function processQueue() {
-      // Si el medio está libre y hay alguien esperando
       if (!isShowcaseBusy && subQueue.length > 0) {
         isShowcaseBusy = true;
-        const currentSub = subQueue.shift(); // Saca al primero de la cola
+        const currentSub = subQueue.shift();
         
         currentSub.el.classList.remove('waiting');
         currentSub.el.classList.add('showcase');
 
-        // A los 10 segundos, lo mandamos al loop y procesamos el siguiente
         setTimeout(() => {
           currentSub.el.classList.remove('showcase');
           
-          // Calcular posición de entrada al loop
           let currentMinX = 0;
           drawings.forEach(d => { if(!d.el.classList.contains('waiting') && d.x < currentMinX) currentMinX = d.x; });
           currentSub.x = currentMinX - spacing;
 
           isShowcaseBusy = false;
-          processQueue(); // Llamada recursiva para el siguiente en cola
+          processQueue();
         }, 10000);
       }
     }
 
-    // (Función removeLastFromUser se mantiene igual que antes)
     function removeLastFromUser(username) {
       for (let i = drawings.length - 1; i >= 0; i--) {
         if (drawings[i].user === username) {
           drawings[i].el.remove();
           drawings.splice(i, 1);
-          // Si el que borramos estaba en la cola, lo sacamos también
           subQueue = subQueue.filter(q => q.user !== username);
           break;
         }
