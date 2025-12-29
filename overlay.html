@@ -2,18 +2,38 @@
 <html>
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Overlay Final Pro Corregido - laumehdi</title>
   <style>
-    body { margin: 0; background: transparent; overflow: hidden; width: 1920px; height: 1080px; }
-    #container { position: relative; width: 100%; height: 100%; }
+    /* Bloqueo total de scroll y gestos en el navegador del celular */
+    html, body { 
+      margin: 0; 
+      padding: 0; 
+      background: transparent; 
+      overflow: hidden !important; 
+      width: 100vw; 
+      height: 100vh;
+      position: fixed; /* Evita que el body se mueva */
+      touch-action: none; /* Desactiva gestos de scroll/zoom nativos */
+    }
+
+    /* El contenedor es el que manda sobre el tamaño real del stream */
+    #container { 
+      position: absolute; 
+      width: 1920px; 
+      height: 1080px; 
+      top: 0; 
+      left: 0; 
+      overflow: hidden; 
+      pointer-events: none; /* El overlay no debe interferir con clicks */
+    }
     
     .item { 
       position: absolute; 
       display: flex; 
       flex-direction: column; 
       align-items: center; 
-      will-change: transform, left, top;
-      transition: opacity 0.5s ease, transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      will-change: left, transform; /* Optimización para GPU */
       image-rendering: pixelated;
       image-rendering: crisp-edges;
     }
@@ -66,7 +86,9 @@
         const layerIndex = Math.floor(index / drawingsPerLayer);
         const nuance = layerSpeedNuances[layerIndex] || (1.1 + (Math.sqrt(layerIndex) % 1));
         d.x += baseSpeed * globalSpeedMultiplier * nuance;
-        if (d.x > 1920) {
+        
+        // El límite de muerte es 1920 + el ancho del dibujo
+        if (d.x > 2000) { 
             const myStart = layerIndex * drawingsPerLayer;
             const myGroup = drawings.filter((o, i) => i >= myStart && i < myStart + drawingsPerLayer && !o.el.classList.contains('showcase') && !o.el.classList.contains('waiting'));
             let minX = 0;
@@ -123,7 +145,6 @@
         itemEl.className = 'item';
         if (isSub) itemEl.classList.add('sub-active');
 
-        // Si el test está activo y llega algo real, se oculta
         if (debugModeActive && !isTest) itemEl.classList.add('waiting');
         else if (isSub && !silent) itemEl.classList.add('waiting');
 
@@ -146,7 +167,6 @@
         itemEl.appendChild(nickEl);
         document.getElementById('container').appendChild(itemEl);
 
-        // Posicionamiento X mejorado para evitar el "overlopeado" en test
         let startX = -spacing * (Math.floor(drawings.length / 6));
         
         const drawingObj = { 
@@ -182,18 +202,13 @@
       if (debugModeActive) return;
       debugModeActive = true;
       drawings.forEach(d => d.el.classList.add('waiting'));
-      
       const testCode = "0ce_0m17081205120k210623042501220121042103210223012103230221022103220321032101230322022103210121062102210523022302210922042102120f150g170i";
-
-      // Creamos un array de 40 posiciones para mezclar 8 subs
       let roles = new Array(40).fill(false);
       for(let i=0; i<8; i++) roles[i] = true;
       roles.sort(() => Math.random() - 0.5);
-
       roles.forEach((isFakeSub, idx) => {
         createDrawing("TestUser_" + idx, testCode, isFakeSub, true, true);
       });
-
       setTimeout(() => {
         drawings = drawings.filter(d => {
           if (d.isTest) { d.el.remove(); return false; }
