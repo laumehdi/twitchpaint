@@ -2,70 +2,78 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Editor de Pixeles Pro - laumehdi</title>
   <style>
     :root { --bg-color: #f0f2f5; --text-color: #333; --panel-bg: #ffffff; --border-color: #ccc; --twitch-color: #9146ff; }
     @media (prefers-color-scheme: dark) { :root { --bg-color: #121212; --text-color: #e0e0e0; --panel-bg: #1e1e1e; --border-color: #444; } }
     
-    body { font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: var(--bg-color); color: var(--text-color); overscroll-behavior: none; user-select: none; }
+    body { 
+      font-family: 'Segoe UI', sans-serif; 
+      display: flex; flex-direction: column; align-items: center; justify-content: center; 
+      min-height: 100vh; margin: 0; background: var(--bg-color); color: var(--text-color); 
+      overscroll-behavior: none; 
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
     
     .header-info { text-align: center; margin-bottom: 15px; }
-    .header-info a { 
-      margin: 0; 
-      font-size: 26px; 
-      color: var(--twitch-color); 
-      text-decoration: none; 
-      font-weight: bold;
-      transition: opacity 0.2s;
-    }
-    .header-info a:hover { opacity: 0.8; text-decoration: underline; }
-    .header-info p { margin: 5px 0 0 0; font-weight: bold; font-size: 14px; letter-spacing: 1px; opacity: 0.8; }
+    .header-info a { font-size: 26px; color: var(--twitch-color); text-decoration: none; font-weight: bold; }
+    .header-info p { margin: 5px 0 0 0; font-weight: bold; font-size: 14px; opacity: 0.8; }
 
-    /* touch-action: none es vital para que el móvil no haga scroll al dibujar */
     .grid-container { 
       outline: 4px solid #000; 
       margin-bottom: 20px; 
       line-height: 0; 
-      touch-action: none; 
-      width: 400px; 
-      height: 400px; 
-      background: white; 
-      -webkit-user-drag: none; 
+      width: 400px; height: 400px; 
+      background: white;
+      touch-action: none;
     }
-    #grid { display: grid; grid-template-columns: repeat(16, 25px); grid-template-rows: repeat(16, 25px); width: 400px; height: 400px; }
+    #grid { 
+      display: grid; 
+      grid-template-columns: repeat(16, 25px); 
+      grid-template-rows: repeat(16, 25px); 
+      width: 400px; height: 400px; 
+    }
     
-    .cell { width: 25px; height: 25px; box-sizing: border-box; cursor: crosshair; background-color: #fff; background-image: linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%, #eee), linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%, #eee); background-size: 20px 20px; background-position: 0 0, 10px 10px; border: 0.1px solid rgba(0,0,0,0.05); -webkit-user-drag: none; }
+    /* Restaurado el patrón de ajedrez en las celdas */
+    .cell { 
+      width: 25px; height: 25px; 
+      box-sizing: border-box; 
+      border: 0.1px solid rgba(0,0,0,0.05);
+      touch-action: none;
+      /* Fondo de ajedrez por defecto */
+      background-color: #fff; 
+      background-image: linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%, #eee), 
+                        linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%, #eee); 
+      background-size: 10px 10px; 
+      background-position: 0 0, 5px 5px;
+    }
     
     .palette { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; max-width: 420px; margin-bottom: 20px; }
     .swatch { width: 35px; height: 35px; border-radius: 6px; cursor: pointer; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
     .swatch.selected { border-color: var(--twitch-color); transform: scale(1.1); }
-    .swatch-transparent { background-image: linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%), linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%); background-size: 8px 8px; background-position: 0 0, 4px 4px; background-color: white; }
+    
+    /* Estilo para el color transparente en la paleta */
+    .swatch-transparent { 
+      background-image: linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%), 
+                        linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%); 
+      background-size: 8px 8px; 
+      background-position: 0 0, 4px 4px; 
+      background-color: white; 
+    }
     
     .controls { display: flex; gap: 10px; margin-bottom: 20px; }
-    button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 5px; background: var(--twitch-color); color: #fff; font-weight: bold; transition: transform 0.1s; }
-    button:active { transform: scale(0.95); }
+    button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 5px; background: var(--twitch-color); color: #fff; font-weight: bold; }
 
     #output { 
-      width: 90%; 
-      max-width: 500px; 
-      padding: 15px; 
-      font-family: monospace; 
-      border: 2px solid var(--border-color); 
-      border-radius: 8px; 
-      background: var(--panel-bg); 
-      color: var(--text-color); 
-      text-align: center; 
-      cursor: pointer;
-      transition: all 0.3s ease;
-      font-weight: bold;
-      outline: none;
+      width: 90%; max-width: 500px; padding: 15px; 
+      font-family: monospace; border: 2px solid var(--border-color); 
+      border-radius: 8px; background: var(--panel-bg); color: var(--text-color); 
+      text-align: center; font-weight: bold; outline: none;
     }
-
-    #output.copied {
-      background-color: #28a745 !important;
-      color: white !important;
-      border-color: #1e7e34 !important;
-    }
+    #output.copied { background-color: #28a745 !important; color: white !important; }
   </style>
 </head>
 <body oncontextmenu="return false;">
@@ -75,8 +83,8 @@
     <p>DIBUJÁ Y COPIALO EN EL CHAT</p>
   </div>
 
-  <div class="grid-container" draggable="false">
-    <div id="grid" draggable="false"></div>
+  <div class="grid-container">
+    <div id="grid"></div>
   </div>
 
   <div class="palette" id="palette"></div>
@@ -93,24 +101,30 @@
     let selectedIdx = 1, isDrawing = false;
     const grid = document.getElementById('grid'), cells = [];
 
-    // Inicializar Grilla
+    // 1. Crear Grilla
     for (let i = 0; i < 256; i++) {
       const cell = document.createElement('div');
-      cell.className = 'cell'; cell.dataset.idx = "0";
-      cell.setAttribute('draggable', 'false');
+      cell.className = 'cell'; 
+      cell.dataset.idx = "0";
       
-      // Eventos Mouse
       cell.onmousedown = (e) => { if(e.button === 0) { isDrawing = true; paint(cell); } };
       cell.onmouseover = () => { if(isDrawing) paint(cell); };
       
-      grid.appendChild(cell); cells.push(cell);
+      grid.appendChild(cell); 
+      cells.push(cell);
     }
 
-    // Manejo Global de Mouse
     window.onmouseup = () => isDrawing = false;
-    grid.addEventListener('dragstart', (e) => e.preventDefault());
 
-    // --- SOPORTE TÁCTIL (CELULARES) ---
+    // 2. Soporte Táctil (Continuo y sin saltos)
+    function handleTouch(e) {
+      const touch = e.touches[0];
+      const target = document.elementFromPoint(touch.clientX, touch.clientY);
+      if (target && target.classList.contains('cell')) {
+        paint(target);
+      }
+    }
+
     grid.addEventListener('touchstart', (e) => {
       isDrawing = true;
       handleTouch(e);
@@ -122,26 +136,23 @@
       e.preventDefault();
     }, { passive: false });
 
-    grid.addEventListener('touchend', () => {
-      isDrawing = false;
-    });
+    grid.addEventListener('touchend', () => isDrawing = false);
 
-    function handleTouch(e) {
-      const touch = e.touches[0];
-      // Obtiene el elemento bajo el dedo usando coordenadas
-      const target = document.elementFromPoint(touch.clientX, touch.clientY);
-      if (target && target.classList.contains('cell')) {
-        paint(target);
+    // 3. Pintado (Maneja el fondo de ajedrez vs color sólido)
+    function paint(cell) {
+      cell.dataset.idx = selectedIdx;
+      if (selectedIdx === 0) {
+        // Si es transparente, restauramos el patrón de ajedrez
+        cell.style.backgroundColor = '#fff';
+        cell.style.backgroundImage = 'linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%, #eee), linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%, #eee)';
+      } else {
+        // Si hay color, ocultamos el ajedrez
+        cell.style.backgroundColor = colors[selectedIdx];
+        cell.style.backgroundImage = 'none';
       }
     }
 
-    function paint(cell) {
-      cell.dataset.idx = selectedIdx;
-      cell.style.backgroundColor = selectedIdx === 0 ? 'transparent' : colors[selectedIdx];
-      cell.style.backgroundImage = selectedIdx === 0 ? '' : 'none';
-    }
-
-    // Inicializar Paleta
+    // 4. Paleta
     const palette = document.getElementById('palette');
     colors.forEach((color, idx) => {
       const swatch = document.createElement('div');
@@ -155,6 +166,7 @@
       palette.appendChild(swatch);
     });
 
+    // 5. Lógica de Código y Limpieza
     function generateCode() {
       const pixelData = cells.map(c => parseInt(c.dataset.idx));
       const usedColors = [...new Set(pixelData)].sort((a,b) => a-b);
@@ -169,35 +181,29 @@
         compressed += currentIdx.toString(16) + count.toString(36);
       }
       document.getElementById('output').value = "!dibujar " + header + "_" + compressed;
-      document.getElementById('output').classList.remove('copied');
     }
 
     function clearCanvas() { 
       if(confirm("¿Borrar dibujo?")) {
-        cells.forEach(c => { c.dataset.idx="0"; c.style.backgroundColor="transparent"; c.style.backgroundImage=''; });
+        cells.forEach(c => { 
+          c.dataset.idx="0"; 
+          c.style.backgroundColor="#fff"; 
+          c.style.backgroundImage='linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%, #eee), linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%, #eee)'; 
+        });
         document.getElementById('output').value = "";
-        document.getElementById('output').classList.remove('copied');
       }
     }
 
     async function copyToClipboard() { 
       const out = document.getElementById('output');
       if(!out.value || out.value === "¡COPIADO!") return;
-
       try {
-        const textToCopy = out.value;
-        await navigator.clipboard.writeText(textToCopy);
-        
+        await navigator.clipboard.writeText(out.value);
+        const originalValue = out.value;
         out.value = "¡COPIADO!";
         out.classList.add('copied');
-
-        setTimeout(() => {
-          out.value = textToCopy;
-          out.classList.remove('copied');
-        }, 1200);
-      } catch (err) {
-        console.error('Error al copiar: ', err);
-      }
+        setTimeout(() => { out.value = originalValue; out.classList.remove('copied'); }, 1200);
+      } catch (err) {}
     }
   </script>
 </body>
