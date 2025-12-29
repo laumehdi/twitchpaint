@@ -135,7 +135,7 @@
           const target = msg.replace('!borrar', '').replace('@', '').trim().toLowerCase();
           isAdmin ? removeLastFromUser(target || user) : removeLastFromUser(user);
         } 
-        else if (msg === '!limpiar') {
+        else if (msg === '!limpiartodo') {
           if (isAdmin) {
             drawings.forEach(d => d.el.remove());
             drawings = [];
