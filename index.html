@@ -5,82 +5,94 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Editor de Pixeles Pro - laumehdi</title>
   <style>
-    :root { --bg-color: #f0f2f5; --text-color: #333; --panel-bg: #ffffff; --border-color: #ccc; --twitch-color: #9146ff; }
-    @media (prefers-color-scheme: dark) { :root { --bg-color: #121212; --text-color: #e0e0e0; --panel-bg: #1e1e1e; --border-color: #444; } }
+    :root { 
+      --bg-color: #f0f2f5; --text-color: #333; --panel-bg: #ffffff; 
+      --border-color: #ddd; --twitch-color: #9146ff; 
+      --chess-light: #ffffff; --chess-dark: #f8f8f8;
+    }
+    @media (prefers-color-scheme: dark) { 
+      :root { --bg-color: #121212; --text-color: #e0e0e0; --panel-bg: #1e1e1e; --border-color: #333; --chess-light: #2a2a2a; --chess-dark: #202020; } 
+    }
     
     body { 
-      font-family: 'Segoe UI', sans-serif; 
-      display: flex; flex-direction: column; align-items: center; justify-content: center; 
-      min-height: 100vh; margin: 0; background: var(--bg-color); color: var(--text-color); 
-      overscroll-behavior: none; 
-      user-select: none;
-      -webkit-user-select: none;
-      touch-action: none;
+      font-family: 'Segoe UI', system-ui, sans-serif; 
+      display: flex; flex-direction: column; align-items: center; 
+      min-height: 100vh; margin: 0; padding: 10px;
+      background: var(--bg-color); color: var(--text-color); 
+      overscroll-behavior: none; user-select: none; -webkit-user-select: none; touch-action: none;
     }
     
-    .header-info { text-align: center; margin-bottom: 15px; }
-    .header-info a { font-size: 26px; color: var(--twitch-color); text-decoration: none; font-weight: bold; }
-    .header-info p { margin: 5px 0 0 0; font-weight: bold; font-size: 14px; opacity: 0.8; }
+    .header-info { text-align: center; margin-bottom: 10px; }
+    .header-info a { font-size: clamp(18px, 5vw, 24px); color: var(--twitch-color); text-decoration: none; font-weight: bold; }
+    .header-info p { margin: 2px 0; font-weight: bold; font-size: 12px; opacity: 0.7; letter-spacing: 0.5px; }
 
+    /* Contenedor responsivo */
     .grid-container { 
-      outline: 4px solid #000; 
-      margin-bottom: 20px; 
-      line-height: 0; 
-      width: 400px; height: 400px; 
+      outline: 2px solid #000; 
+      margin-bottom: 15px; 
       background: white;
       touch-action: none;
+      width: min(400px, 95vw); 
+      height: min(400px, 95vw); 
+      display: flex;
     }
+    
     #grid { 
       display: grid; 
-      grid-template-columns: repeat(16, 25px); 
-      grid-template-rows: repeat(16, 25px); 
-      width: 400px; height: 400px; 
+      grid-template-columns: repeat(16, 1fr); 
+      grid-template-rows: repeat(16, 1fr); 
+      width: 100%; height: 100%; 
     }
     
-    /* Restaurado el patrón de ajedrez en las celdas */
+    /* Fondo de ajedrez mejorado */
     .cell { 
-      width: 25px; height: 25px; 
       box-sizing: border-box; 
-      border: 0.1px solid rgba(0,0,0,0.05);
+      border: 0.1px solid rgba(0,0,0,0.03);
       touch-action: none;
-      /* Fondo de ajedrez por defecto */
-      background-color: #fff; 
-      background-image: linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%, #eee), 
-                        linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%, #eee); 
-      background-size: 10px 10px; 
-      background-position: 0 0, 5px 5px;
+      background-color: var(--chess-light);
+      background-image: linear-gradient(45deg, var(--chess-dark) 25%, transparent 25%, transparent 75%, var(--chess-dark) 75%, var(--chess-dark)), 
+                        linear-gradient(45deg, var(--chess-dark) 25%, transparent 25%, transparent 75%, var(--chess-dark) 75%, var(--chess-dark));
+      background-size: 16px 16px;
+      background-position: 0 0, 8px 8px;
     }
     
-    .palette { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; max-width: 420px; margin-bottom: 20px; }
-    .swatch { width: 35px; height: 35px; border-radius: 6px; cursor: pointer; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-    .swatch.selected { border-color: var(--twitch-color); transform: scale(1.1); }
-    
-    /* Estilo para el color transparente en la paleta */
+    .palette { 
+      display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; 
+      max-width: 400px; margin-bottom: 15px; 
+    }
+    .swatch { 
+      width: clamp(28px, 8vw, 34px); 
+      height: clamp(28px, 8vw, 34px); 
+      border-radius: 4px; cursor: pointer; border: 2px solid transparent; 
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+    }
+    .swatch.selected { border-color: var(--twitch-color); transform: scale(1.15); z-index: 2; }
     .swatch-transparent { 
       background-image: linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%), 
                         linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%); 
-      background-size: 8px 8px; 
-      background-position: 0 0, 4px 4px; 
-      background-color: white; 
+      background-size: 6px 6px; background-position: 0 0, 3px 3px; background-color: white; 
     }
     
-    .controls { display: flex; gap: 10px; margin-bottom: 20px; }
-    button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 5px; background: var(--twitch-color); color: #fff; font-weight: bold; }
+    .controls { display: flex; gap: 8px; margin-bottom: 15px; width: 100%; justify-content: center; }
+    button { 
+      padding: 10px 15px; cursor: pointer; border: none; border-radius: 6px; 
+      background: var(--twitch-color); color: #fff; font-weight: bold; font-size: 14px;
+    }
 
     #output { 
-      width: 90%; max-width: 500px; padding: 15px; 
+      width: min(400px, 90vw); padding: 12px; 
       font-family: monospace; border: 2px solid var(--border-color); 
       border-radius: 8px; background: var(--panel-bg); color: var(--text-color); 
-      text-align: center; font-weight: bold; outline: none;
+      text-align: center; font-weight: bold; outline: none; font-size: 13px;
     }
-    #output.copied { background-color: #28a745 !important; color: white !important; }
+    #output.copied { background-color: #28a745 !important; color: white !important; border-color: #1e7e34; }
   </style>
 </head>
 <body oncontextmenu="return false;">
 
   <div class="header-info">
-    <a href="https://twitch.tv/laumehdi" target="_blank">https://twitch.tv/laumehdi</a>
-    <p>DIBUJÁ Y COPIALO EN EL CHAT</p>
+    <a href="https://twitch.tv/laumehdi" target="_blank">twitch.tv/laumehdi</a>
+    <p>DIBUJÁ Y COPIÁ EL CÓDIGO</p>
   </div>
 
   <div class="grid-container">
@@ -90,7 +102,7 @@
   <div class="palette" id="palette"></div>
 
   <div class="controls">
-    <button onclick="clearCanvas()" style="background:#dc3545">Borrar Todo</button>
+    <button onclick="clearCanvas()" style="background:#dc3545">Borrar</button>
     <button onclick="generateCode()">Generar Código</button>
   </div>
 
@@ -101,59 +113,43 @@
     let selectedIdx = 1, isDrawing = false;
     const grid = document.getElementById('grid'), cells = [];
 
-    // 1. Crear Grilla
+    // Crear Grilla
     for (let i = 0; i < 256; i++) {
       const cell = document.createElement('div');
       cell.className = 'cell'; 
       cell.dataset.idx = "0";
-      
       cell.onmousedown = (e) => { if(e.button === 0) { isDrawing = true; paint(cell); } };
       cell.onmouseover = () => { if(isDrawing) paint(cell); };
-      
       grid.appendChild(cell); 
       cells.push(cell);
     }
 
     window.onmouseup = () => isDrawing = false;
 
-    // 2. Soporte Táctil (Continuo y sin saltos)
+    // Soporte Táctil
     function handleTouch(e) {
       const touch = e.touches[0];
       const target = document.elementFromPoint(touch.clientX, touch.clientY);
-      if (target && target.classList.contains('cell')) {
-        paint(target);
-      }
+      if (target && target.classList.contains('cell')) paint(target);
     }
 
-    grid.addEventListener('touchstart', (e) => {
-      isDrawing = true;
-      handleTouch(e);
-      e.preventDefault(); 
-    }, { passive: false });
-
-    grid.addEventListener('touchmove', (e) => {
-      if (isDrawing) handleTouch(e);
-      e.preventDefault();
-    }, { passive: false });
-
+    grid.addEventListener('touchstart', (e) => { isDrawing = true; handleTouch(e); e.preventDefault(); }, { passive: false });
+    grid.addEventListener('touchmove', (e) => { if (isDrawing) handleTouch(e); e.preventDefault(); }, { passive: false });
     grid.addEventListener('touchend', () => isDrawing = false);
 
-    // 3. Pintado (Maneja el fondo de ajedrez vs color sólido)
     function paint(cell) {
       cell.dataset.idx = selectedIdx;
       if (selectedIdx === 0) {
-        // Si es transparente, restauramos el patrón de ajedrez
-        cell.style.backgroundColor = '#fff';
-        cell.style.backgroundImage = 'linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%, #eee), linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%, #eee)';
+        cell.style.backgroundColor = "";
+        cell.style.backgroundImage = ""; // Vuelve al CSS original (ajedrez)
       } else {
-        // Si hay color, ocultamos el ajedrez
         cell.style.backgroundColor = colors[selectedIdx];
-        cell.style.backgroundImage = 'none';
+        cell.style.backgroundImage = "none";
       }
     }
 
-    // 4. Paleta
-    const palette = document.getElementById('palette');
+    // Paleta
+    const palEl = document.getElementById('palette');
     colors.forEach((color, idx) => {
       const swatch = document.createElement('div');
       swatch.className = 'swatch' + (idx === selectedIdx ? ' selected' : '');
@@ -163,10 +159,9 @@
         document.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
         swatch.classList.add('selected'); selectedIdx = idx;
       };
-      palette.appendChild(swatch);
+      palEl.appendChild(swatch);
     });
 
-    // 5. Lógica de Código y Limpieza
     function generateCode() {
       const pixelData = cells.map(c => parseInt(c.dataset.idx));
       const usedColors = [...new Set(pixelData)].sort((a,b) => a-b);
@@ -185,24 +180,20 @@
 
     function clearCanvas() { 
       if(confirm("¿Borrar dibujo?")) {
-        cells.forEach(c => { 
-          c.dataset.idx="0"; 
-          c.style.backgroundColor="#fff"; 
-          c.style.backgroundImage='linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%, #eee), linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%, #eee)'; 
-        });
+        cells.forEach(c => { c.dataset.idx="0"; c.style.backgroundColor=""; c.style.backgroundImage=""; });
         document.getElementById('output').value = "";
       }
     }
 
     async function copyToClipboard() { 
       const out = document.getElementById('output');
-      if(!out.value || out.value === "¡COPIADO!") return;
+      if(!out.value || out.value.includes("¡COPIADO!")) return;
       try {
-        await navigator.clipboard.writeText(out.value);
-        const originalValue = out.value;
+        const textToCopy = out.value;
+        await navigator.clipboard.writeText(textToCopy);
         out.value = "¡COPIADO!";
         out.classList.add('copied');
-        setTimeout(() => { out.value = originalValue; out.classList.remove('copied'); }, 1200);
+        setTimeout(() => { out.value = textToCopy; out.classList.remove('copied'); }, 1200);
       } catch (err) {}
     }
   </script>
