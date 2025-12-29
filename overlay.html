@@ -2,36 +2,49 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Overlay Sub VIP - laumehdi</title>
+  <title>Overlay Sub VIP Premium - laumehdi</title>
   <style>
     body { margin: 0; background: transparent; overflow: hidden; width: 1920px; height: 1080px; }
     #container { position: relative; width: 100%; height: 100%; }
     
     .item { 
       position: absolute; 
-      top: 60px; 
       display: flex; 
       flex-direction: column; 
       align-items: center; 
-      will-change: transform;
-      transition: opacity 0.5s ease;
+      will-change: transform, left, top;
+      transition: opacity 0.5s ease, transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       image-rendering: pixelated;
       image-rendering: crisp-edges;
     }
 
-    /* Animación de baile para Suscriptores */
+    /* Animación de baile */
     @keyframes subDance {
-      0% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 5px gold); }
-      25% { transform: scale(1.1) rotate(5deg); filter: drop-shadow(0 0 15px yellow); }
-      50% { transform: scale(1) rotate(-5deg); filter: drop-shadow(0 0 5px gold); }
-      75% { transform: scale(1.1) rotate(5deg); filter: drop-shadow(0 0 15px yellow); }
-      100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 5px gold); }
+      0% { transform: rotate(0deg) scale(1); }
+      25% { transform: rotate(5deg) scale(1.05); }
+      50% { transform: rotate(-5deg) scale(1); }
+      75% { transform: rotate(5deg) scale(1.05); }
+      100% { transform: rotate(0deg) scale(1); }
     }
 
-    /* Clase que se aplica si es SUB */
+    /* Estilo exclusivo para Subs */
     .sub-active {
-      animation: subDance 1.2s infinite ease-in-out;
-      z-index: 10; /* Los subs se ven por encima */
+      z-index: 999;
+      filter: drop-shadow(0 0 12px gold) drop-shadow(0 0 5px orange);
+    }
+    
+    /* El baile se aplica al contenedor del grid si es sub */
+    .sub-active .grid {
+      animation: subDance 1s infinite ease-in-out;
+    }
+
+    /* Estado cuando aparece en grande en el medio */
+    .showcase {
+      position: fixed !important;
+      top: 50% !important;
+      left: 50% !important;
+      transform: translate(-50%, -50%) scale(4) !important; /* Tamaño gigante */
+      z-index: 10000 !important;
     }
 
     .nick { 
@@ -40,11 +53,10 @@
       font-weight: 900; 
       margin-top: 2px; 
       font-size: 25px; 
-      white-space: nowrap;
-      text-shadow: -1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000, 2px 2px 3px rgba(0,0,0,0.8);
+      text-shadow: -1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000, 2px 2px 5px rgba(0,0,0,0.8);
     }
 
-    /* Etiqueta VIP para el nombre del sub */
+    /* Estrella para el nombre del sub */
     .sub-active .nick::before {
       content: '⭐ ';
       color: gold;
@@ -54,18 +66,13 @@
       display: grid; 
       grid-template-columns: repeat(16, 12px); 
       grid-template-rows: repeat(16, 12px); 
-      background-color: transparent;
     }
 
     .px { 
-      width: 13px; 
-      height: 13px; 
-      margin-right: -1px; 
-      margin-bottom: -1px;
+      width: 13px; height: 13px; 
+      margin-right: -1px; margin-bottom: -1px;
       shape-rendering: crispEdges;
     }
-
-    .fade-out { opacity: 0; }
   </style>
 </head>
 <body>
@@ -84,6 +91,9 @@
 
     function animate() {
       drawings.forEach((d, index) => {
+        // Si el dibujo está en modo "showcase" (en el medio), no se mueve en el loop
+        if (d.el.classList.contains('showcase')) return;
+
         const layerIndex = Math.floor(index / drawingsPerLayer);
         const nuance = layerSpeedNuances[layerIndex] || (1.1 + (Math.sqrt(layerIndex) % 1));
         const currentMove = baseSpeed * globalSpeedMultiplier * nuance;
@@ -92,12 +102,12 @@
         
         if (d.x > 1920) {
             const myStart = layerIndex * drawingsPerLayer;
-            const myGroup = drawings.filter((_, i) => i >= myStart && i < myStart + drawingsPerLayer);
+            const myGroup = drawings.filter((o, i) => i >= myStart && i < myStart + drawingsPerLayer && !o.el.classList.contains('showcase'));
             let minX = 0;
             myGroup.forEach(other => { if(other.x < minX) minX = other.x; });
             d.x = minX - spacing; 
         }
-        // Aplicamos transformación base. La animación de baile (CSS) se suma a esto.
+        
         d.el.style.left = `${d.x}px`;
         d.el.style.top = `${60 + d.offsetY}px`;
         d.el.style.transform = `scale(${d.scale})`;
@@ -108,7 +118,7 @@
 
     const ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
     ws.onopen = () => {
-      ws.send('CAP REQ :twitch.tv/tags'); // ¡IMPORTANTE! Pedimos los tags de sub
+      ws.send('CAP REQ :twitch.tv/tags');
       ws.send('PASS oauth:none');
       ws.send('NICK justinfan' + Math.floor(Math.random()*10000));
       ws.send(`JOIN #${CHANNEL}`);
@@ -117,25 +127,17 @@
     ws.onmessage = (e) => {
       if (e.data.includes('PING')) ws.send('PONG :tmi.twitch.tv');
       
-      // Parseo de Tags y Mensaje
       if (e.data.includes('PRIVMSG')) {
         const parts = e.data.split('PRIVMSG #' + CHANNEL + ' :');
         const msg = parts[1] ? parts[1].trim() : '';
-        const metadata = e.data.split(' ')[0]; // Aquí vienen los tags
-        
-        // Extraer el nombre de usuario de forma segura
+        const metadata = e.data.split(' ')[0];
         const userMatch = e.data.match(/:(\w+)!/);
         const user = userMatch ? userMatch[1].toLowerCase() : '';
         
-        // VERIFICACIÓN DE SUB: Buscamos "subscriber=1" o el badge de suscriptor
         const isSub = metadata.includes('subscriber=1') || metadata.includes('badges=subscriber');
         const isAdmin = (user === CHANNEL || user === 'laumehdi');
 
-        if (msg.startsWith('!velocidad ') && isAdmin) {
-          let val = parseFloat(msg.split(' ')[1]);
-          if (!isNaN(val) && val > 0 && val <= 2) globalSpeedMultiplier = val;
-        } 
-        else if (msg.startsWith('!dibujar ')) {
+        if (msg.startsWith('!dibujar ')) {
           createDrawing(user, msg.split(' ')[1], isSub);
         } 
         else if (msg.startsWith('!borrar')) {
@@ -149,16 +151,6 @@
       }
     };
 
-    function removeLastFromUser(username) {
-      for (let i = drawings.length - 1; i >= 0; i--) {
-        if (drawings[i].user === username) {
-          drawings[i].el.remove();
-          drawings.splice(i, 1);
-          break;
-        }
-      }
-    }
-
     function createDrawing(user, fullCode, isSub) {
       try {
         const [header, payload] = fullCode.split('_');
@@ -171,9 +163,9 @@
         const itemEl = document.createElement('div');
         itemEl.className = 'item';
         
-        // SI ES SUB, AGREGAMOS LA CLASE DE BAILE
         if (isSub) {
           itemEl.classList.add('sub-active');
+          itemEl.classList.add('showcase'); // Empieza en el medio
         }
 
         const grid = document.createElement('div');
@@ -200,12 +192,11 @@
         const randomScale = 0.85 + (Math.random() * 0.3);
         const randomOffsetY = (Math.random() * 50) - 25;
 
-        // Posicionamiento inicial
+        // Cálculo de posición inicial para cuando termine el showcase
         let count = drawings.length;
-        const layerIndex = Math.floor(count / drawingsPerLayer);
-        const myStart = layerIndex * drawingsPerLayer;
+        const layerIdx = Math.floor(count / drawingsPerLayer);
+        const myStart = layerIdx * drawingsPerLayer;
         const myGroup = drawings.slice(myStart);
-
         let startX = -300;
         if (myGroup.length > 0) {
             let minX = 0;
@@ -213,8 +204,31 @@
             startX = minX - spacing;
         }
 
-        drawings.push({ el: itemEl, x: startX, user: user, scale: randomScale, offsetY: randomOffsetY, isSub: isSub });
+        const drawingObj = { el: itemEl, x: startX, user: user, scale: randomScale, offsetY: randomOffsetY };
+        drawings.push(drawingObj);
+
+        // Si es SUB, después de 10 segundos, lo mandamos al loop
+        if (isSub) {
+          setTimeout(() => {
+            itemEl.classList.remove('showcase');
+            // Recalcular posición para que entre al final de la cola actual
+            let currentMinX = 0;
+            drawings.forEach(d => { if(d.x < currentMinX) currentMinX = d.x; });
+            drawingObj.x = currentMinX - spacing;
+          }, 10000);
+        }
+
       } catch(err) {}
+    }
+
+    function removeLastFromUser(username) {
+      for (let i = drawings.length - 1; i >= 0; i--) {
+        if (drawings[i].user === username) {
+          drawings[i].el.remove();
+          drawings.splice(i, 1);
+          break;
+        }
+      }
     }
   </script>
 </body>
