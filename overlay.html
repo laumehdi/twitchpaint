@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Overlay Pro Final - laumehdi</title>
+  <title>Overlay Sub VIP - laumehdi</title>
   <style>
     body { margin: 0; background: transparent; overflow: hidden; width: 1920px; height: 1080px; }
     #container { position: relative; width: 100%; height: 100%; }
@@ -15,9 +15,23 @@
       align-items: center; 
       will-change: transform;
       transition: opacity 0.5s ease;
-      /* Mejora de renderizado para OBS */
       image-rendering: pixelated;
       image-rendering: crisp-edges;
+    }
+
+    /* Animación de baile para Suscriptores */
+    @keyframes subDance {
+      0% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 5px gold); }
+      25% { transform: scale(1.1) rotate(5deg); filter: drop-shadow(0 0 15px yellow); }
+      50% { transform: scale(1) rotate(-5deg); filter: drop-shadow(0 0 5px gold); }
+      75% { transform: scale(1.1) rotate(5deg); filter: drop-shadow(0 0 15px yellow); }
+      100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 5px gold); }
+    }
+
+    /* Clase que se aplica si es SUB */
+    .sub-active {
+      animation: subDance 1.2s infinite ease-in-out;
+      z-index: 10; /* Los subs se ven por encima */
     }
 
     .nick { 
@@ -30,7 +44,12 @@
       text-shadow: -1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000, 2px 2px 3px rgba(0,0,0,0.8);
     }
 
-    /* Cambiamos a 12px exactos pero con un truco en los hijos */
+    /* Etiqueta VIP para el nombre del sub */
+    .sub-active .nick::before {
+      content: '⭐ ';
+      color: gold;
+    }
+
     .grid { 
       display: grid; 
       grid-template-columns: repeat(16, 12px); 
@@ -38,32 +57,12 @@
       background-color: transparent;
     }
 
-    /* Solución al espacio transparente: 
-       Hacemos el pixel un poquito más grande (13px) para que se solapen 
-       y eliminamos el suavizado de bordes */
     .px { 
       width: 13px; 
       height: 13px; 
       margin-right: -1px; 
       margin-bottom: -1px;
       shape-rendering: crispEdges;
-    }
-
-    @keyframes winnerDance {
-      0% { transform: translate(-50%, -50%) scale(3) rotate(0deg); filter: drop-shadow(0 0 10px gold); }
-      25% { transform: translate(-50%, -55%) scale(3.2) rotate(5deg); filter: drop-shadow(0 0 20px yellow); }
-      50% { transform: translate(-50%, -50%) scale(3) rotate(-5deg); filter: drop-shadow(0 0 10px gold); }
-      75% { transform: translate(-50%, -45%) scale(3.2) rotate(5deg); filter: drop-shadow(0 0 20px yellow); }
-      100% { transform: translate(-50%, -50%) scale(3) rotate(0deg); filter: drop-shadow(0 0 10px gold); }
-    }
-
-    .winner-active {
-      position: fixed !important;
-      top: 50% !important;
-      left: 50% !important;
-      z-index: 9999;
-      animation: winnerDance 1.2s infinite ease-in-out;
-      transition: none !important;
     }
 
     .fade-out { opacity: 0; }
@@ -82,12 +81,9 @@
     const layerSpeedNuances = [1.0, 2.0, 1.3, 1.7, 1.1, 1.9];
 
     let drawings = [];
-    let isWinnerPresent = false;
 
     function animate() {
       drawings.forEach((d, index) => {
-        if (d.el.classList.contains('winner-active')) return;
-
         const layerIndex = Math.floor(index / drawingsPerLayer);
         const nuance = layerSpeedNuances[layerIndex] || (1.1 + (Math.sqrt(layerIndex) % 1));
         const currentMove = baseSpeed * globalSpeedMultiplier * nuance;
@@ -96,12 +92,15 @@
         
         if (d.x > 1920) {
             const myStart = layerIndex * drawingsPerLayer;
-            const myGroup = drawings.filter((_, i) => i >= myStart && i < myStart + drawingsPerLayer && !_.el.classList.contains('winner-active'));
+            const myGroup = drawings.filter((_, i) => i >= myStart && i < myStart + drawingsPerLayer);
             let minX = 0;
             myGroup.forEach(other => { if(other.x < minX) minX = other.x; });
             d.x = minX - spacing; 
         }
-        d.el.style.transform = `translateX(${d.x}px) translateY(${d.offsetY}px) scale(${d.scale})`;
+        // Aplicamos transformación base. La animación de baile (CSS) se suma a esto.
+        d.el.style.left = `${d.x}px`;
+        d.el.style.top = `${60 + d.offsetY}px`;
+        d.el.style.transform = `scale(${d.scale})`;
       });
       requestAnimationFrame(animate);
     }
@@ -109,6 +108,7 @@
 
     const ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
     ws.onopen = () => {
+      ws.send('CAP REQ :twitch.tv/tags'); // ¡IMPORTANTE! Pedimos los tags de sub
       ws.send('PASS oauth:none');
       ws.send('NICK justinfan' + Math.floor(Math.random()*10000));
       ws.send(`JOIN #${CHANNEL}`);
@@ -116,67 +116,38 @@
 
     ws.onmessage = (e) => {
       if (e.data.includes('PING')) ws.send('PONG :tmi.twitch.tv');
-      const parts = e.data.split('PRIVMSG #' + CHANNEL + ' :');
-      if (parts.length > 1) {
-        const msg = parts[1].trim();
-        const user = e.data.split('!')[0].substring(1).toLowerCase();
+      
+      // Parseo de Tags y Mensaje
+      if (e.data.includes('PRIVMSG')) {
+        const parts = e.data.split('PRIVMSG #' + CHANNEL + ' :');
+        const msg = parts[1] ? parts[1].trim() : '';
+        const metadata = e.data.split(' ')[0]; // Aquí vienen los tags
+        
+        // Extraer el nombre de usuario de forma segura
+        const userMatch = e.data.match(/:(\w+)!/);
+        const user = userMatch ? userMatch[1].toLowerCase() : '';
+        
+        // VERIFICACIÓN DE SUB: Buscamos "subscriber=1" o el badge de suscriptor
+        const isSub = metadata.includes('subscriber=1') || metadata.includes('badges=subscriber');
         const isAdmin = (user === CHANNEL || user === 'laumehdi');
 
         if (msg.startsWith('!velocidad ') && isAdmin) {
-          let val = parseInt(msg.split(' ')[1]);
-          if (!isNaN(val) && val > 0 && val <= 2) {
-            globalSpeedMultiplier = val;
-          }
+          let val = parseFloat(msg.split(' ')[1]);
+          if (!isNaN(val) && val > 0 && val <= 2) globalSpeedMultiplier = val;
         } 
         else if (msg.startsWith('!dibujar ')) {
-          createDrawing(user, msg.split(' ')[1]);
+          createDrawing(user, msg.split(' ')[1], isSub);
         } 
         else if (msg.startsWith('!borrar')) {
           const target = msg.replace('!borrar', '').replace('@', '').trim().toLowerCase();
           isAdmin ? removeLastFromUser(target || user) : removeLastFromUser(user);
         } 
-        else if (msg === '!limpiartodo') {
-          if (isAdmin) {
+        else if (msg === '!limpiartodo' && isAdmin) {
             drawings.forEach(d => d.el.remove());
             drawings = [];
-          } else {
-            drawings = drawings.filter(d => {
-              if (d.user === user) { d.el.remove(); return false; }
-              return true;
-            });
-          }
-        }
-        else if (msg === '!ganador' && isAdmin && drawings.length > 0 && !isWinnerPresent) {
-          pickWinner();
         }
       }
     };
-
-    function pickWinner() {
-      isWinnerPresent = true;
-      const randomIndex = Math.floor(Math.random() * drawings.length);
-      const winner = drawings[randomIndex];
-      const originalIdx = randomIndex;
-      
-      winner.el.classList.add('winner-active');
-      
-      setTimeout(() => {
-        const layerIdx = Math.floor(originalIdx / drawingsPerLayer);
-        const myStart = layerIdx * drawingsPerLayer;
-        const myGroup = drawings.filter((d, i) => i >= myStart && i < myStart + drawingsPerLayer && !d.el.classList.contains('winner-active'));
-
-        if (myGroup.length > 0) {
-          let minX = myGroup[0].x;
-          myGroup.forEach(o => { if(o.x < minX) minX = o.x; });
-          winner.x = minX - spacing;
-        } else {
-          winner.x = -300;
-        }
-
-        winner.el.classList.remove('winner-active');
-        isWinnerPresent = false;
-      }, 14000);
-    }
 
     function removeLastFromUser(username) {
       for (let i = drawings.length - 1; i >= 0; i--) {
@@ -188,7 +159,7 @@
       }
     }
 
-    function createDrawing(user, fullCode) {
+    function createDrawing(user, fullCode, isSub) {
       try {
         const [header, payload] = fullCode.split('_');
         const usedColors = [];
@@ -199,6 +170,12 @@
 
         const itemEl = document.createElement('div');
         itemEl.className = 'item';
+        
+        // SI ES SUB, AGREGAMOS LA CLASE DE BAILE
+        if (isSub) {
+          itemEl.classList.add('sub-active');
+        }
+
         const grid = document.createElement('div');
         grid.className = 'grid';
 
@@ -223,6 +200,7 @@
         const randomScale = 0.85 + (Math.random() * 0.3);
         const randomOffsetY = (Math.random() * 50) - 25;
 
+        // Posicionamiento inicial
         let count = drawings.length;
         const layerIndex = Math.floor(count / drawingsPerLayer);
         const myStart = layerIndex * drawingsPerLayer;
@@ -235,7 +213,7 @@
             startX = minX - spacing;
         }
 
-        drawings.push({ el: itemEl, x: startX, user: user, scale: randomScale, offsetY: randomOffsetY });
+        drawings.push({ el: itemEl, x: startX, user: user, scale: randomScale, offsetY: randomOffsetY, isSub: isSub });
       } catch(err) {}
     }
   </script>
