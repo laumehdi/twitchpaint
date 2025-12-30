@@ -16,7 +16,6 @@
     body { 
       font-family: 'Segoe UI', system-ui, sans-serif; 
       display: flex; flex-direction: column; align-items: center; 
-      /* Centrado vertical en PC */
       justify-content: flex-start; 
       min-height: 100vh; margin: 0; 
       padding: 50px 20px; 
@@ -65,14 +64,10 @@
       border-color: transparent; 
     }
     
-    .palettes-content.show { 
-      max-height: 500px; opacity: 1; padding: 15px; border-color: var(--border-color);
-    }
-    
+    .palettes-content.show { max-height: 500px; opacity: 1; padding: 15px; border-color: var(--border-color); }
     .arrow-icon { transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1); }
     .rotate-icon { transform: rotate(180deg); }
 
-    /* Botones de Paleta */
     .palette-btn {
       position: relative; background: var(--bg-color);
       border: 2px solid transparent; border-radius: 6px; padding: 3px;
@@ -175,16 +170,13 @@
     }
     #output.copied { background: #28a745 !important; color: white !important; border-color: #1e7e34; }
 
-    /* --- RESPONSIVIDAD MÓVIL AVANZADA --- */
+    /* --- RESPONSIVIDAD MÓVIL OPTIMIZADA --- */
     @media (max-width: 600px) {
       body {
-        /* Ocupar toda la altura y quitar centrado para fluidez */
         height: 100vh; 
         padding: 10px;
-        
-        /* CORRECCIÓN: Agregamos mucho padding abajo para la barra de Android */
-        padding-bottom: 50px; 
-        
+        /* Padding inferior extra grande para evitar barra Android */
+        padding-bottom: 20px; 
         justify-content: flex-start;
       }
 
@@ -207,21 +199,21 @@
 
       .grid-wrap { width: 100%; max-width: none; }
 
-      /* Botones y Inputs más grandes para dedos */
-      button, .palette-toggle-btn, #output {
-        padding: 16px; font-size: 16px;
-      }
+      button, .palette-toggle-btn, #output { padding: 16px; font-size: 16px; }
 
-      /* Barra de Colores Horizontal ABAJO */
+      /* BARRA DE COLORES HORIZONTAL (Abajo) */
       .right-column {
         width: 100%; flex-direction: row;
         height: 60px; flex-shrink: 0; 
         padding: 5px; gap: 5px;
+        /* AQUÍ ESTÁ EL ARREGLO CLAVE: MARGEN INFERIOR */
+        margin-bottom: 40px; 
+        /* Borde redondeado completo para que parezca flotante */
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
       }
       
-      .active-swatch {
-        min-height: 100%; min-width: 0; 
-      }
+      .active-swatch { min-height: 100%; min-width: 0; }
     }
   </style>
 </head>
@@ -335,7 +327,6 @@
           btn.appendChild(m);
         });
         
-        // NO cerramos automáticamente
         btn.onclick = () => { setPalette(key); };
         
         container.appendChild(btn);
@@ -345,11 +336,9 @@
     function renderActiveColors() {
       const container = document.getElementById('activeColors');
       container.innerHTML = '';
-      // 1. Colores (Indices 1-16)
       for (let i = 1; i < currentColors.length; i++) {
         createSwatch(container, i);
       }
-      // 2. Transparente (Index 0)
       createSwatch(container, 0);
     }
 
@@ -403,7 +392,6 @@
       catch(e) { out.select(); document.execCommand("copy"); }
     }
 
-    // Inicio
     renderPalettesBar();
     renderActiveColors();
   </script>
