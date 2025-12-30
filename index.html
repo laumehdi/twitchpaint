@@ -3,237 +3,380 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Editor de Pixeles Pro V2 - laumehdi</title>
+  <title>Editor Pixel Art Pro - laumehdi</title>
   <style>
     :root { 
       --bg-color: #f0f2f5; --text-color: #333; --panel-bg: #ffffff; 
-      --border-color: #ddd; --twitch-color: #9146ff; 
-      --chess-light: #ffffff; --chess-dark: #f8f8f8;
+      --border-color: #ccc; --twitch-color: #9146ff; 
     }
     @media (prefers-color-scheme: dark) { 
-      :root { --bg-color: #121212; --text-color: #e0e0e0; --panel-bg: #1e1e1e; --border-color: #333; --chess-light: #2a2a2a; --chess-dark: #202020; } 
+      :root { --bg-color: #121212; --text-color: #e0e0e0; --panel-bg: #1e1e1e; --border-color: #444; } 
     }
     
     body { 
       font-family: 'Segoe UI', system-ui, sans-serif; 
       display: flex; flex-direction: column; align-items: center; 
-      min-height: 100vh; margin: 0; padding: 10px;
+      /* Ajuste de posición: Empezar arriba con margen */
+      justify-content: flex-start; 
+      min-height: 100vh; margin: 0; 
+      padding: 50px 20px; /* 50px de aire arriba en PC */
+      box-sizing: border-box;
       background: var(--bg-color); color: var(--text-color); 
       overscroll-behavior: none; user-select: none; -webkit-user-select: none; touch-action: none;
     }
     
-    .header-info { text-align: center; margin-bottom: 10px; }
-    .header-info a { font-size: clamp(18px, 5vw, 24px); color: var(--twitch-color); text-decoration: none; font-weight: bold; }
-    .header-info p { margin: 2px 0; font-weight: bold; font-size: 12px; opacity: 0.7; letter-spacing: 0.5px; }
+    .header-info { text-align: center; margin-bottom: 25px; }
+    .header-info a { font-size: 32px; color: var(--twitch-color); text-decoration: none; font-weight: 900; letter-spacing: -0.5px; }
+    .header-info p { margin: 5px 0; font-weight: 700; font-size: 14px; opacity: 0.8; letter-spacing: 1px; text-transform: uppercase; }
 
-    /* Contenedor responsivo */
-    .grid-container { 
-      outline: 2px solid #000; 
-      margin-bottom: 15px; 
-      background: white;
-      touch-action: none;
-      width: min(400px, 95vw); 
-      height: min(400px, 95vw); 
+    /* --- LAYOUT GLOBAL --- */
+    .app-container {
       display: flex;
-    }
-    
-    #grid { 
-      display: grid; 
-      grid-template-columns: repeat(16, 1fr); 
-      grid-template-rows: repeat(16, 1fr); 
-      width: 100%; height: 100%; 
-    }
-    
-    /* Fondo de ajedrez mejorado */
-    .cell { 
-      box-sizing: border-box; 
-      border: 0.1px solid rgba(0,0,0,0.03);
-      touch-action: none;
-      background-color: var(--chess-light);
-      background-image: linear-gradient(45deg, var(--chess-dark) 25%, transparent 25%, transparent 75%, var(--chess-dark) 75%, var(--chess-dark)), 
-                        linear-gradient(45deg, var(--chess-dark) 25%, transparent 25%, transparent 75%, var(--chess-dark) 75%, var(--chess-dark));
-      background-size: 16px 16px;
-      background-position: 0 0, 8px 8px;
-    }
-    
-    .palette { 
-      display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; 
-      max-width: 400px; margin-bottom: 15px; 
-    }
-    .swatch { 
-      width: clamp(28px, 8vw, 34px); 
-      height: clamp(28px, 8vw, 34px); 
-      border-radius: 4px; cursor: pointer; border: 2px solid transparent; 
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
-    }
-    .swatch.selected { border-color: var(--twitch-color); transform: scale(1.15); z-index: 2; }
-    .swatch-transparent { 
-      background-image: linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%), 
-                        linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%); 
-      background-size: 6px 6px; background-position: 0 0, 3px 3px; background-color: white; 
-    }
-    
-    .controls { display: flex; gap: 8px; margin-bottom: 15px; width: 100%; justify-content: center; }
-    button { 
-      padding: 10px 15px; cursor: pointer; border: none; border-radius: 6px; 
-      background: var(--twitch-color); color: #fff; font-weight: bold; font-size: 14px;
+      flex-direction: column;
+      gap: 15px;
+      width: 100%;
+      max-width: 480px; 
     }
 
-    #output { 
-      width: min(400px, 90vw); padding: 12px; 
-      font-family: monospace; border: 2px solid var(--border-color); 
-      border-radius: 8px; background: var(--panel-bg); color: var(--text-color); 
-      text-align: center; font-weight: bold; outline: none; font-size: 13px;
+    /* 1. ACORDEÓN DE PALETAS */
+    .palette-dropdown-container { width: 100%; position: relative; z-index: 100; }
+
+    .palette-toggle-btn {
+      width: 100%; padding: 14px;
+      background: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--twitch-color); font-weight: bold; font-size: 14px;
+      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: transform 0.1s;
     }
-    #output.copied { background-color: #28a745 !important; color: white !important; border-color: #1e7e34; }
+    .palette-toggle-btn:active { transform: scale(0.99); }
+
+    .palettes-content {
+      max-height: 0; opacity: 0; overflow: hidden;
+      transition: max-height 0.4s ease-out, opacity 0.3s ease-in;
+      display: flex; flex-wrap: wrap; gap: 8px;
+      background: var(--panel-bg);
+      padding: 0 15px;
+      border: 1px solid var(--border-color); border-top: none;
+      border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;
+      justify-content: center;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-top: -4px;
+      border-color: transparent; 
+    }
+    
+    .palettes-content.show { 
+      max-height: 500px; opacity: 1; padding: 15px; border-color: var(--border-color);
+    }
+    
+    .arrow-icon { transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1); }
+    .rotate-icon { transform: rotate(180deg); }
+
+    /* Botones de Paleta */
+    .palette-btn {
+      position: relative; background: var(--bg-color);
+      border: 2px solid transparent; border-radius: 6px; padding: 3px;
+      cursor: pointer; display: grid; grid-template-columns: repeat(8, 1fr); gap: 0; 
+      transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .palette-btn:hover { transform: translateY(-3px); border-color: #999; z-index: 10; }
+    .palette-btn.selected { border-color: var(--twitch-color); box-shadow: 0 0 0 2px var(--twitch-color); z-index: 5; }
+
+    .mini-swatch { width: 14px; height: 14px; }
+    .mini-swatch:first-child { border-top-left-radius: 3px; }
+    .mini-swatch:nth-child(8) { border-top-right-radius: 3px; }
+    .mini-swatch:nth-child(9) { border-bottom-left-radius: 3px; }
+    .mini-swatch:last-child { border-bottom-right-radius: 3px; }
+
+    .palette-btn::after {
+      content: attr(data-name); position: absolute; bottom: 115%; left: 50%; transform: translateX(-50%);
+      background: #222; color: #fff; padding: 4px 8px; font-size: 11px; border-radius: 4px; font-weight: bold;
+      white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.2s; z-index: 20;
+    }
+    .palette-btn:hover::after { opacity: 1; }
+
+
+    /* 2. ZONA PRINCIPAL */
+    .workspace {
+      display: flex; flex-direction: row; gap: 12px; align-items: flex-start; 
+    }
+
+    /* Columna IZQUIERDA */
+    .left-column {
+      display: flex; flex-direction: column; gap: 10px;
+      flex-grow: 1; width: 340px; 
+    }
+
+    .grid-wrap {
+      width: 100%; aspect-ratio: 1/1;
+      border: 1px solid #999; background: white;
+      background-image: 
+        linear-gradient(45deg, #e6e6e6 25%, transparent 25%, transparent 75%, #e6e6e6 75%, #e6e6e6),
+        linear-gradient(45deg, #e6e6e6 25%, transparent 25%, transparent 75%, #e6e6e6 75%, #e6e6e6);
+      background-size: 20px 20px; background-position: 0 0, 10px 10px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      cursor: crosshair; border-radius: 4px;
+    }
+
+    #grid {
+      display: grid; grid-template-columns: repeat(16, 1fr); grid-template-rows: repeat(16, 1fr);
+      width: 100%; height: 100%;
+    }
+
+    .cell { border: 1px solid rgba(0,0,0,0.05); background-color: transparent; touch-action: none; }
+
+    /* Columna DERECHA */
+    .right-column {
+      display: flex; flex-direction: column;
+      width: 45px; height: auto; align-self: stretch; 
+      background: var(--panel-bg); border: 1px solid var(--border-color);
+      border-radius: 8px; padding: 5px; gap: 3px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+
+    .active-swatch {
+      flex: 1; width: 100%; border-radius: 4px; cursor: pointer;
+      border: 2px solid transparent; transition: transform 0.1s; min-height: 12px; 
+    }
+    .active-swatch:hover { transform: scale(1.1); z-index: 10; }
+    .active-swatch.selected {
+      border-color: white; box-shadow: 0 0 0 2px var(--twitch-color);
+      transform: scale(1.15); z-index: 20;
+    }
+
+    .bg-transp { 
+      background-color: #fff;
+      background-image: 
+        linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc),
+        linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc);
+      background-size: 8px 8px; background-position: 0 0, 4px 4px;
+      position: relative; border: 1px solid #bbb;
+    }
+    .bg-transp::after {
+      content: '×'; color: #ff4444; position: absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-weight:bold; font-size: 14px;
+    }
+
+    /* CONTROLES */
+    .controls { display: flex; gap: 10px; }
+    button {
+      flex: 1; padding: 12px; border: none; border-radius: 8px;
+      background: var(--twitch-color); color: white; font-weight: bold; font-size: 14px;
+      cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.1s;
+    }
+    button:active { transform: scale(0.96); }
+    button:hover { filter: brightness(1.1); }
+    
+    #output {
+      width: 100%; padding: 12px; box-sizing: border-box;
+      background: var(--panel-bg); border: 2px solid var(--border-color);
+      border-radius: 8px; color: var(--text-color);
+      text-align: center; font-family: monospace; font-weight: bold; font-size: 12px;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+    }
+    #output.copied { background: #28a745 !important; color: white !important; border-color: #1e7e34; }
+
+    /* RESPONSIVIDAD */
+    @media (max-width: 500px) {
+      body {
+        padding: 15px; /* Menos padding arriba para celular */
+      }
+      .workspace {
+        flex-direction: column; 
+        align-items: center;
+      }
+      .left-column {
+        width: 95vw; 
+      }
+      .right-column {
+        width: 100%; 
+        flex-direction: row;
+        height: 60px;
+        align-self: auto;
+      }
+    }
   </style>
 </head>
 <body oncontextmenu="return false;">
 
   <div class="header-info">
     <a href="https://twitch.tv/laumehdi" target="_blank">twitch.tv/laumehdi</a>
-    <p>DIBUJÁ Y COPIÁ EL CÓDIGO</p>
+    <p>EDITOR PIXEL ART</p>
   </div>
 
-  <div class="grid-container">
-    <div id="grid"></div>
+  <div class="app-container">
+    
+    <div class="palette-dropdown-container">
+      <button class="palette-toggle-btn" onclick="togglePalettes()">
+        <span>🎨 CAMBIAR PALETA</span>
+        <span class="arrow-icon" id="arrowIcon">▼</span>
+      </button>
+      
+      <div class="palettes-content" id="palettesList">
+        </div>
+    </div>
+
+    <div class="workspace">
+      
+      <div class="left-column">
+        <div class="grid-wrap">
+          <div id="grid"></div>
+        </div>
+
+        <div class="controls">
+          <button onclick="clearCanvas()" style="background:#dc3545">Borrar</button>
+          <button onclick="generateCode()">Generar</button>
+        </div>
+
+        <input type="text" id="output" readonly onclick="copyToClipboard()" placeholder="Toca Generar para copiar">
+      </div>
+
+      <div class="right-column" id="activeColors">
+        </div>
+
+    </div>
+
   </div>
-
-  <div class="palette" id="palette"></div>
-
-  <div class="controls">
-    <button onclick="clearCanvas()" style="background:#dc3545">Borrar</button>
-    <button onclick="generateCode()">Generar Código</button>
-  </div>
-
-  <input type="text" id="output" readonly onclick="copyToClipboard()" placeholder="El código aparecerá aquí">
 
   <script>
-    const colors = ['transparent','#000000','#aa0000','#00aa00','#aa5500','#0000aa','#aa00aa','#00aaaa','#aaaaaa','#555555','#ff5555','#55ff55','#ffff55','#5555ff','#ff55ff','#55ffff','#ffffff'];
-    let selectedIdx = 1, isDrawing = false;
-    const grid = document.getElementById('grid'), cells = [];
+    const PALETTES = {
+      pico8:    { name: "Pico-8",     colors: ['#000000','#1D2B53','#7E2553','#008751','#AB5236','#5F574F','#C2C3C7','#FFF1E8','#FF004D','#FFA300','#FFEC27','#00E436','#29ADFF','#83769C','#FF77A8','#FFCCAA'] },
+      snes:     { name: "SNES",       colors: ['#000000','#211e20','#555568','#a0a08b','#e9efec','#65737e','#7c6f64','#558b2f','#33691e','#1b5e20','#0277bd','#01579b','#b71c1c','#d32f2f','#ff6f00','#ffb300'] },
+      megadrive:{ name: "MegaDrive",  colors: ['#000000','#222222','#444444','#aaaaaa','#ffffff','#0000ff','#000077','#ff0000','#770000','#ffff00','#777700','#00ff00','#007700','#ff00ff','#00ffff','#000033'] },
+      arne16:   { name: "Arne-16",    colors: ['#000000','#9D9D9D','#FFFFFF','#BE2633','#E06F8B','#493C2B','#A46422','#EB8931','#F7E26B','#2F484E','#44891A','#A3CE27','#1B2632','#005784','#31A2F2','#B2DCEF'] },
+      standard: { name: "Estándar",   colors: ['#000000','#aa0000','#00aa00','#aa5500','#0000aa','#aa00aa','#00aaaa','#aaaaaa','#555555','#ff5555','#55ff55','#ffff55','#5555ff','#ff55ff','#55ffff','#ffffff'] },
+      famicom:  { name: "NES",        colors: ['#000000','#F83800','#F0D0B0','#503000','#FFE0A8','#0058F8','#00A800','#F8D878','#0058F8','#F87858','#FCA044','#F8B800','#B8F818','#58D854','#58F898','#FFFFFF'] },
+      gbc:      { name: "GBC",        colors: ['#000000','#000000','#333333','#666666','#999999','#cccccc','#ffffff','#ff0000','#00ff00','#0000ff','#ffff00','#00ffff','#ff00ff','#ff8800','#8800ff','#00ff88'] },
+      pastel:   { name: "Pastel",     colors: ['#6b5b95','#feb236','#d64161','#ff7b25','#d6cbd3','#eca1a6','#bdcebe','#ada397','#f7786b','#91a8d0','#f7cac9','#92a8d1','#b5e7a0','#ffcc5c','#ff6f69','#e3e0cc'] },
+      skin:     { name: "Piel",       colors: ['#3b240e','#593110','#754012','#8f5218','#ac6720','#c27e32','#d6964a','#e6af66','#f2c885','#fce1a2','#fff6cc','#4a2e16','#693e1b','#8f5624','#b87635','#e3a059'] },
+      gameboy:  { name: "Gameboy",    colors: ['#0f380f','#306230','#8bac0f','#9bbc0f','#0f380f','#306230','#8bac0f','#9bbc0f','#0f380f','#306230','#8bac0f','#9bbc0f','#0f380f','#306230','#8bac0f','#9bbc0f'] },
+      neon:     { name: "Neon",       colors: ['#000000','#2b2b2b','#383838','#08F7FE','#09FBD3','#FE53BB','#F5D300','#FFACFC','#7122FA','#560A86','#011FFD','#FF2281','#75D5FD','#E2D1F9','#31112C','#FFFFFF'] },
+      mono:     { name: "B/N",        colors: ['#000000','#111111','#222222','#333333','#444444','#555555','#666666','#777777','#888888','#999999','#aaaaaa','#bbbbbb','#cccccc','#dddddd','#eeeeee','#ffffff'] }
+    };
 
-    // Crear Grilla
+    let currentKey = 'pico8';
+    let currentColors = ['transparent', ...PALETTES['pico8'].colors];
+    let selectedIdx = 1; 
+    let isDrawing = false;
+    
+    // GRID
+    const grid = document.getElementById('grid');
+    const cells = [];
     for (let i = 0; i < 256; i++) {
       const cell = document.createElement('div');
-      cell.className = 'cell'; 
-      cell.dataset.idx = "0";
+      cell.className = 'cell'; cell.dataset.idx = "0";
       cell.onmousedown = (e) => { if(e.button === 0) { isDrawing = true; paint(cell); } };
       cell.onmouseover = () => { if(isDrawing) paint(cell); };
-      grid.appendChild(cell); 
-      cells.push(cell);
+      grid.appendChild(cell); cells.push(cell);
     }
-
     window.onmouseup = () => isDrawing = false;
-
-    // Soporte Táctil
+    
     function handleTouch(e) {
       const touch = e.touches[0];
       const target = document.elementFromPoint(touch.clientX, touch.clientY);
       if (target && target.classList.contains('cell')) paint(target);
     }
-
     grid.addEventListener('touchstart', (e) => { isDrawing = true; handleTouch(e); e.preventDefault(); }, { passive: false });
     grid.addEventListener('touchmove', (e) => { if (isDrawing) handleTouch(e); e.preventDefault(); }, { passive: false });
     grid.addEventListener('touchend', () => isDrawing = false);
 
-    function paint(cell) {
-      cell.dataset.idx = selectedIdx;
-      if (selectedIdx === 0) {
-        cell.style.backgroundColor = "";
-        cell.style.backgroundImage = ""; 
-      } else {
-        cell.style.backgroundColor = colors[selectedIdx];
-        cell.style.backgroundImage = "none";
+    function paint(cell) { cell.dataset.idx = selectedIdx; updateVisual(cell); }
+    function updateVisual(cell) {
+      const idx = parseInt(cell.dataset.idx);
+      cell.style.backgroundColor = (idx === 0) ? "" : currentColors[idx];
+    }
+
+    // --- UI LOGIC ---
+    function togglePalettes() {
+      const content = document.getElementById('palettesList');
+      const arrow = document.getElementById('arrowIcon');
+      content.classList.toggle('show');
+      arrow.classList.toggle('rotate-icon');
+    }
+
+    function renderPalettesBar() {
+      const container = document.getElementById('palettesList');
+      container.innerHTML = '';
+      for (const [key, data] of Object.entries(PALETTES)) {
+        const btn = document.createElement('div');
+        btn.className = 'palette-btn' + (key === currentKey ? ' selected' : '');
+        btn.setAttribute('data-name', data.name);
+        data.colors.forEach(c => {
+          const m = document.createElement('div');
+          m.className = 'mini-swatch'; m.style.backgroundColor = c;
+          btn.appendChild(m);
+        });
+        
+        // NO cerramos automáticamente
+        btn.onclick = () => { setPalette(key); };
+        
+        container.appendChild(btn);
       }
     }
 
-    // Paleta
-    const palEl = document.getElementById('palette');
-    colors.forEach((color, idx) => {
-      const swatch = document.createElement('div');
-      swatch.className = 'swatch' + (idx === selectedIdx ? ' selected' : '');
-      if(color === 'transparent') swatch.classList.add('swatch-transparent');
-      else swatch.style.backgroundColor = color;
-      swatch.onclick = () => {
-        document.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
-        swatch.classList.add('selected'); selectedIdx = idx;
-      };
-      palEl.appendChild(swatch);
-    });
+    function renderActiveColors() {
+      const container = document.getElementById('activeColors');
+      container.innerHTML = '';
+      // 1. Colores (Indices 1-16)
+      for (let i = 1; i < currentColors.length; i++) {
+        createSwatch(container, i);
+      }
+      // 2. Transparente (Index 0)
+      createSwatch(container, 0);
+    }
 
-    // --- NUEVO SISTEMA DE GENERACIÓN DE CÓDIGO (V2 COMPRIMIDO) ---
+    function createSwatch(container, idx) {
+      const el = document.createElement('div');
+      el.className = 'active-swatch' + (idx === selectedIdx ? ' selected' : '');
+      if (idx === 0) el.classList.add('bg-transp');
+      else el.style.backgroundColor = currentColors[idx];
+      
+      el.onclick = () => {
+        document.querySelectorAll('.active-swatch').forEach(s => s.classList.remove('selected'));
+        el.classList.add('selected'); selectedIdx = idx;
+      };
+      container.appendChild(el);
+    }
+
+    function setPalette(key) {
+      currentKey = key;
+      currentColors = ['transparent', ...PALETTES[key].colors];
+      renderPalettesBar();
+      renderActiveColors();
+      cells.forEach(c => updateVisual(c));
+    }
+
+    // --- CODE GEN ---
     function generateCode() {
       const pixelData = cells.map(c => parseInt(c.dataset.idx));
-      // Obtenemos los colores únicos usados
-      const usedColors = [...new Set(pixelData)].sort((a,b) => a-b);
+      const uniqueIndices = [...new Set(pixelData)].filter(i => i !== 0).sort((a,b) => a-b);
       
-      // Si hay más de 16 colores únicos, usamos el método viejo (seguridad)
-      if (usedColors.length > 16) {
-         generateCodeLegacy(pixelData, usedColors);
-         return;
-      }
+      if (uniqueIndices.length > 16) { alert("Error: Colores muy complejos."); return; }
 
-      // 1. Crear Cabecera (Paleta Local)
-      const header = usedColors.map(c => c.toString(16)).join('');
-
-      // 2. Comprimir Datos (Bit-Packing: 2 píxeles por byte)
-      let binaryString = "";
+      const header = uniqueIndices.map(idx => currentColors[idx].replace('#','')).join('');
+      let bin = "";
       for (let i = 0; i < pixelData.length; i += 2) {
-        // Encontramos el índice local (0-15)
-        const p1 = usedColors.indexOf(pixelData[i]);
-        const p2 = (i + 1 < pixelData.length) ? usedColors.indexOf(pixelData[i+1]) : 0;
-        
-        // Empaquetamos: p1 en los 4 bits altos, p2 en los 4 bits bajos
-        const byte = (p1 << 4) | p2;
-        binaryString += String.fromCharCode(byte);
+        const i1 = pixelData[i], i2 = pixelData[i+1] || 0;
+        const p1 = (i1 === 0) ? 0 : (uniqueIndices.indexOf(i1) + 1);
+        const p2 = (i2 === 0) ? 0 : (uniqueIndices.indexOf(i2) + 1);
+        bin += String.fromCharCode((p1 << 4) | p2);
       }
-
-      // 3. Convertir a Base64 para hacerlo texto legible
-      const compressed = btoa(binaryString);
-      
-      // Prefijo 'v2' para que el overlay sepa cómo leerlo
-      document.getElementById('output').value = "!dibujar v2" + header + "_" + compressed;
+      document.getElementById('output').value = "!dibujar v2" + header + "_" + btoa(bin);
     }
 
-    // Método viejo (Backup)
-    function generateCodeLegacy(pixelData, usedColors) {
-      const header = usedColors.map(c => c.toString(16)).join('');
-      let compressed = "";
-      for (let i = 0; i < pixelData.length; i++) {
-        let count = 1;
-        const currentIdx = usedColors.indexOf(pixelData[i]);
-        while (i + 1 < pixelData.length && usedColors.indexOf(pixelData[i+1]) === currentIdx && count < 35) {
-          count++; i++;
-        }
-        compressed += currentIdx.toString(16) + count.toString(36);
-      }
-      document.getElementById('output').value = "!dibujar " + header + "_" + compressed;
+    function clearCanvas() {
+      if(confirm("¿Borrar?")) { cells.forEach(c => { c.dataset.idx="0"; updateVisual(c); }); document.getElementById('output').value=""; }
     }
 
-    function clearCanvas() { 
-      if(confirm("¿Borrar dibujo?")) {
-        cells.forEach(c => { c.dataset.idx="0"; c.style.backgroundColor=""; c.style.backgroundImage=""; });
-        document.getElementById('output').value = "";
-      }
-    }
-
-    async function copyToClipboard() { 
+    async function copyToClipboard() {
       const out = document.getElementById('output');
-      if(!out.value || out.value.includes("¡COPIADO!")) return;
-      try {
-        const textToCopy = out.value;
-        await navigator.clipboard.writeText(textToCopy);
-        out.value = "¡COPIADO!";
-        out.classList.add('copied');
-        setTimeout(() => { out.value = textToCopy; out.classList.remove('copied'); }, 1200);
-      } catch (err) {
-        out.select();
-        document.execCommand("copy");
-        out.value = "¡COPIADO!";
-        setTimeout(() => { out.value = textToCopy; }, 1200);
-      }
+      if(!out.value) return;
+      try { await navigator.clipboard.writeText(out.value); out.classList.add('copied'); setTimeout(()=>out.classList.remove('copied'), 1000); }
+      catch(e) { out.select(); document.execCommand("copy"); }
     }
+
+    // Inicio
+    renderPalettesBar();
+    renderActiveColors();
   </script>
 </body>
 </html>
