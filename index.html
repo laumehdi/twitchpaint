@@ -16,30 +16,32 @@
     body { 
       font-family: 'Segoe UI', system-ui, sans-serif; 
       display: flex; flex-direction: column; align-items: center; 
-      /* Ajuste de posición: Empezar arriba con margen */
+      /* En PC centramos, en móvil cambiamos */
       justify-content: flex-start; 
       min-height: 100vh; margin: 0; 
-      padding: 50px 20px; /* 50px de aire arriba en PC */
+      padding: 40px 20px; 
       box-sizing: border-box;
       background: var(--bg-color); color: var(--text-color); 
       overscroll-behavior: none; user-select: none; -webkit-user-select: none; touch-action: none;
     }
     
-    .header-info { text-align: center; margin-bottom: 25px; }
+    /* CABECERA */
+    .header-info { text-align: center; margin-bottom: 20px; flex-shrink: 0; }
     .header-info a { font-size: 32px; color: var(--twitch-color); text-decoration: none; font-weight: 900; letter-spacing: -0.5px; }
     .header-info p { margin: 5px 0; font-weight: 700; font-size: 14px; opacity: 0.8; letter-spacing: 1px; text-transform: uppercase; }
 
-    /* --- LAYOUT GLOBAL --- */
+    /* CONTENEDOR PRINCIPAL */
     .app-container {
       display: flex;
       flex-direction: column;
       gap: 15px;
       width: 100%;
       max-width: 480px; 
+      /* En móvil esto crecerá */
     }
 
     /* 1. ACORDEÓN DE PALETAS */
-    .palette-dropdown-container { width: 100%; position: relative; z-index: 100; }
+    .palette-dropdown-container { width: 100%; position: relative; z-index: 100; flex-shrink: 0; }
 
     .palette-toggle-btn {
       width: 100%; padding: 14px;
@@ -64,15 +66,11 @@
       box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-top: -4px;
       border-color: transparent; 
     }
-    
-    .palettes-content.show { 
-      max-height: 500px; opacity: 1; padding: 15px; border-color: var(--border-color);
-    }
+    .palettes-content.show { max-height: 500px; opacity: 1; padding: 15px; border-color: var(--border-color); }
     
     .arrow-icon { transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1); }
     .rotate-icon { transform: rotate(180deg); }
 
-    /* Botones de Paleta */
     .palette-btn {
       position: relative; background: var(--bg-color);
       border: 2px solid transparent; border-radius: 6px; padding: 3px;
@@ -96,12 +94,12 @@
     .palette-btn:hover::after { opacity: 1; }
 
 
-    /* 2. ZONA PRINCIPAL */
+    /* 2. ZONA DE TRABAJO (Workspace) */
     .workspace {
       display: flex; flex-direction: row; gap: 12px; align-items: flex-start; 
     }
 
-    /* Columna IZQUIERDA */
+    /* Columna IZQUIERDA (Canvas + Controles) */
     .left-column {
       display: flex; flex-direction: column; gap: 10px;
       flex-grow: 1; width: 340px; 
@@ -125,7 +123,7 @@
 
     .cell { border: 1px solid rgba(0,0,0,0.05); background-color: transparent; touch-action: none; }
 
-    /* Columna DERECHA */
+    /* Columna DERECHA (Selector Colores) */
     .right-column {
       display: flex; flex-direction: column;
       width: 45px; height: auto; align-self: stretch; 
@@ -175,23 +173,70 @@
     }
     #output.copied { background: #28a745 !important; color: white !important; border-color: #1e7e34; }
 
-    /* RESPONSIVIDAD */
-    @media (max-width: 500px) {
+
+    /* --- RESPONSIVIDAD MÓVIL AVANZADA --- */
+    @media (max-width: 600px) {
       body {
-        padding: 15px; /* Menos padding arriba para celular */
+        /* Ocupar toda la altura y quitar centrado para fluidez */
+        height: 100vh; 
+        padding: 10px;
+        justify-content: flex-start;
       }
+
+      .header-info { margin-bottom: 10px; }
+      .header-info a { font-size: 24px; } /* Titulo mediano */
+      
+      .app-container {
+        /* Crecimiento vertical para ocupar pantalla */
+        flex-grow: 1; 
+        height: 100%;
+        gap: 10px;
+      }
+
+      /* Zona de trabajo en columna vertical */
       .workspace {
         flex-direction: column; 
-        align-items: center;
+        align-items: stretch;
+        flex-grow: 1; /* Ocupa el espacio sobrante */
       }
+
       .left-column {
-        width: 95vw; 
+        width: 100%; 
+        flex-grow: 1; /* Estirarse para empujar elementos */
+        
+        /* AQUÍ ESTÁ LA MAGIA DEL "FLOW":
+           Space-between separa: Canvas arriba, Output abajo, botones en medio. 
+           Si hay mucho espacio, se separan. Si hay poco, se juntan. */
+        justify-content: space-between; 
+        gap: 15px; 
       }
+
+      /* Canvas maximizado al ancho del móvil */
+      .grid-wrap {
+        width: 100%; 
+        max-width: none;
+        /* El aspect-ratio mantendrá el cuadrado */
+      }
+
+      /* Botones y Inputs más grandes para dedos */
+      button, .palette-toggle-btn, #output {
+        padding: 16px; /* Más gorditos */
+        font-size: 16px;
+      }
+
+      /* Barra de Colores: Abajo del todo, horizontal */
       .right-column {
         width: 100%; 
         flex-direction: row;
-        height: 60px;
-        align-self: auto;
+        height: 60px; /* Altura cómoda para tocar */
+        flex-shrink: 0; /* No encogerse */
+        padding: 5px;
+        gap: 5px;
+      }
+      
+      .active-swatch {
+        min-height: 100%; /* Llenar altura de barra */
+        min-width: 0; /* Para que flex funcione bien */
       }
     }
   </style>
