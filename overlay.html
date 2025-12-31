@@ -146,7 +146,31 @@
              continue;
         }
 
-        // MUERTE (50 MINUTOS)
+        // --- LÓGICA DE MUERTE POR DISPARO (FEATHER FALL / PLUMA) ---
+        // Esto simula la caída de hoja de Mario 3
+        if (d.featherFalling) {
+            d.featherTimer += 0.12; // Velocidad de la oscilación
+            d.y += 3.5;             // Velocidad de caída constante
+
+            // Oscilación en X (Sway)
+            const sway = Math.sin(d.featherTimer) * 60; // 60px de amplitud
+            d.x = d.originX + sway;
+
+            // Rotación suave acompañando el movimiento
+            d.rot = Math.cos(d.featherTimer) * 20; // 20 grados de inclinación
+
+            d.el.style.transform = 'translate3d(' + d.x + 'px, ' + d.y + 'px, 0) rotate(' + d.rot + 'deg)';
+            
+            // Si sale de pantalla por abajo, borrar
+            if (d.y > 1200) {
+                d.el.remove();
+                if(d.code) activeCodes.delete(d.code);
+                drawings.splice(i, 1);
+            }
+            continue; // Saltamos el resto de la lógica para este dibujo
+        }
+
+        // --- MUERTE NATURAL (TIEMPO DE VIDA) ---
         if (!d.dying && !testMode && (now - d.createdAt > LIFE_TIME_MS)) {
             d.dying = true;
             d.vy = 0; d.rot = 0;
@@ -166,7 +190,7 @@
                 continue;
             }
         } else {
-            // Movimiento Normal
+            // Movimiento Normal Horizontal
             d.x += d.speed;
             if (d.x > 2200) { 
               let minX = -200;
@@ -252,6 +276,10 @@
           clearAll();
         } else if (msg === '!testpixel' && isAdmin) {
           toggleTest();
+        
+        // --- COMANDO !SHOOT AGREGADO AQUÍ ---
+        } else if (msg === '!shoot' && isAdmin) {
+          shootRandomDrawing();
         }
       }
     }
@@ -346,7 +374,10 @@
           x: forceX !== undefined ? forceX : -400,
           isTest: isTest,
           createdAt: Date.now(),
-          dying: false
+          dying: false,
+          featherFalling: false, // Nuevo estado para !shoot
+          featherTimer: 0,
+          originX: 0
         };
 
         if (forceX === undefined) {
@@ -366,11 +397,33 @@
       } catch(e) { console.error(e); }
     }
 
+    // --- FUNCIÓN PARA EJECUTAR EL DISPARO ---
+    function shootRandomDrawing() {
+      // Filtrar candidatos (que no se estén muriendo, ni sean la animación de sub, etc.)
+      const candidates = drawings.filter(d => 
+        !d.dying && 
+        !d.featherFalling && 
+        !d.el.classList.contains('hidden') && 
+        !d.el.classList.contains('showcase') &&
+        !d.el.classList.contains('waiting')
+      );
+
+      if (candidates.length === 0) return; // No hay a quien disparar
+
+      // Elegir víctima aleatoria
+      const victim = candidates[Math.floor(Math.random() * candidates.length)];
+      
+      // Configurar estado de caída estilo pluma
+      victim.featherFalling = true;
+      victim.featherTimer = 0; // Para el seno/coseno
+      victim.originX = victim.x; // Guardamos el eje central de la oscilación
+    }
+
     function toggleTest() {
       if (!testMode) {
         testMode = true;
         drawings.forEach(function(d) { if(!d.isTest) d.el.classList.add('hidden'); });
-        // Código de prueba complejo para verificar compresión (V1)
+        // Código de prueba
         const code = "0ce_0m17081205120k210623042501220121042103210223012103230221022103220321032101230322022103210121062102210523022302210922042102120f150g170i";
         for (let i = 0; i < 20; i++) {
           createDrawing('Bot_' + i, code, (i % 3 === 0), true, (Math.random() * 1900));
