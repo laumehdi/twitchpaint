@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Overlay Final Gold V2 - laumehdi</title>
+  <title>Overlay Final Gold V7 - laumehdi</title>
   <style>
     html, body { 
       margin: 0; padding: 0; background: transparent !important; 
@@ -26,7 +26,6 @@
       display: none; 
     }
     
-    /* EL DIBUJO BASE */
     .item { 
       position: absolute; 
       top: 0; left: 0; 
@@ -41,25 +40,27 @@
       image-rendering: pixelated; 
       width: 150px; height: 150px; 
       background: transparent; 
-      /* Transición suave para cuando deje de saltar */
       transition: transform 0.3s; 
     }
 
-    /* --- ANIMACIÓN DE SALTO (NUEVOS NO-SUBS) --- */
     @keyframes jumpBounce {
       0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-30px); } /* Altura del salto */
+      50% { transform: translateY(-30px); } 
     }
 
-    /* Clase que se agrega temporalmente a los nuevos */
+    /* El salto solo ocurre si tiene la clase jumping */
     .jumping canvas {
       animation: jumpBounce 0.8s ease-in-out infinite;
     }
 
-    /* GLOW PARA EL DIBUJO DE SUBS */
     .is-sub canvas {
       filter: drop-shadow(0 0 2px #FFD700) drop-shadow(0 0 8px #FFD700);
       animation: glowPulse 2s infinite alternate;
+    }
+    
+    /* Si es sub Y ademas está saltando (en el carril), combinamos animaciones */
+    .jumping.is-sub canvas {
+       animation: jumpBounce 0.8s ease-in-out infinite, glowPulse 2s infinite alternate;
     }
 
     @keyframes glowPulse {
@@ -67,7 +68,6 @@
       to   { filter: drop-shadow(0 0 2px #FFD700) drop-shadow(0 0 12px #FFA500); }
     }
 
-    /* --- NOMBRE DE USUARIO --- */
     .nick { 
       color: white; 
       font-weight: 900;
@@ -91,7 +91,6 @@
         0 0 20px #FFD700;
     }
 
-    /* --- BAILE NUEVO (4.5x) --- */
     .showcase {
       position: fixed !important; 
       top: 50% !important; 
@@ -128,18 +127,18 @@
     
     let drawings = []; 
     let testMode = false;
+    let rainMode = false; 
     let subQueue = [];
     let isShowcaseBusy = false;
     let ws = null;
     let reconnectInterval = null;
     let activeCodes = new Set(); 
 
-    // --- CARRILES COMPACTOS (25% Superior) ---
     const LANES = [5, 35, 65, 95]; 
     const SPEEDS = [2, 3.5, 2.5, 4.5];
     const Z_INDEXES = [5, 20, 10, 30];
 
-    // ANIMACIÓN
+    // ANIMACIÓN PRINCIPAL
     function animate() {
       const now = Date.now();
 
@@ -153,27 +152,30 @@
              continue;
         }
 
-        // --- LÓGICA DE MUERTE POR DISPARO (FEATHER FALL / PLUMA) ---
-        if (d.featherFalling) {
-            d.featherTimer += 0.12; 
-            d.y += 3.5;             
+        // === MODO LLUVIA INFINITA ===
+        if (rainMode) {
+            d.el.style.opacity = 1; 
 
-            const sway = Math.sin(d.featherTimer) * 60; 
-            d.x = d.originX + sway;
-
-            d.rot = Math.cos(d.featherTimer) * 20; 
-
-            d.el.style.transform = 'translate3d(' + d.x + 'px, ' + d.y + 'px, 0) rotate(' + d.rot + 'deg)';
+            // Caída suave vertical
+            d.y += d.rainSpeed; 
             
-            if (d.y > 1200) {
-                d.el.remove();
-                if(d.code) activeCodes.delete(d.code);
-                drawings.splice(i, 1);
+            // Vaivén suave horizontal
+            const sway = Math.sin((now / 800) + d.rainPhase) * 20; 
+            d.x = d.rainOriginX + sway;
+
+            // Render
+            d.el.style.transform = 'translate3d(' + d.x + 'px, ' + d.y + 'px, 0)';
+
+            // BUCLE
+            if (d.y > 1100) {
+                d.y = -180; 
+                d.rainOriginX = Math.random() * 1800; 
             }
             continue; 
         }
+        // ============================
 
-        // --- MUERTE NATURAL (TIEMPO DE VIDA) ---
+        // --- MUERTE NATURAL (50 min) ---
         if (!d.dying && !testMode && (now - d.createdAt > LIFE_TIME_MS)) {
             d.dying = true;
             d.vy = 0; d.rot = 0;
@@ -193,7 +195,8 @@
                 continue;
             }
         } else {
-            // Movimiento Normal Horizontal
+            // Movimiento Normal
+            d.el.style.opacity = 1;
             d.x += d.speed;
             if (d.x > 2200) { 
               let minX = -200;
@@ -214,11 +217,9 @@
     // CONEXIÓN
     function connectTwitch() {
       if (ws) { try { ws.close(); } catch(e){} }
-      
       const statusEl = document.getElementById('status');
       statusEl.style.display = 'block';
-      
-      statusEl.innerText = "CONECTANDO A " + CHANNEL.toUpperCase() + "...";
+      statusEl.innerText = "CONECTANDO...";
       statusEl.style.color = "#ffcc00";
 
       ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
@@ -228,43 +229,27 @@
         statusEl.innerText = "¡CONECTADO!";
         statusEl.style.color = "#00ff00"; 
         setTimeout(function() { statusEl.style.display = 'none'; }, 3000);
-        
         ws.send('CAP REQ :twitch.tv/tags');
         ws.send('PASS oauth:none');
         ws.send('NICK justinfan' + Math.floor(Math.random()*99999));
         ws.send('JOIN #' + CHANNEL.toLowerCase());
-        
         if(reconnectInterval) clearInterval(reconnectInterval);
       };
 
-      ws.onerror = function(e) {
-        statusEl.innerText = "REINTENTANDO...";
-        statusEl.style.color = "red";
-      };
-
-      ws.onclose = function() {
-        statusEl.innerText = "DESCONECTADO";
-        statusEl.style.color = "red";
-        reconnectInterval = setTimeout(connectTwitch, 3000);
-      };
-
-      ws.onmessage = function(e) {
-        handleMessage(e.data);
-      };
+      ws.onerror = function(e) { statusEl.innerText = "REINTENTANDO..."; statusEl.style.color = "red"; };
+      ws.onclose = function() { statusEl.innerText = "DESCONECTADO"; statusEl.style.color = "red"; reconnectInterval = setTimeout(connectTwitch, 3000); };
+      ws.onmessage = function(e) { handleMessage(e.data); };
     }
 
     function handleMessage(data) {
       if (data.indexOf('PING') !== -1) { ws.send('PONG :tmi.twitch.tv'); return; }
-
       if (data.indexOf('PRIVMSG') !== -1) {
         const parts = data.split('PRIVMSG #' + CHANNEL.toLowerCase() + ' :');
         if (!parts[1]) return;
-        
         const msg = parts[1].trim();
         const rawTags = data.split('PRIVMSG')[0];
         const userMatch = data.match(/:(\w+)!/);
         const user = userMatch ? userMatch[1].toLowerCase() : 'unknown';
-        
         const isSub = rawTags.indexOf('subscriber=1') !== -1 || rawTags.indexOf('badges=subscriber') !== -1 || rawTags.indexOf('/founder') !== -1;
         const isAdmin = (user === CHANNEL.toLowerCase());
 
@@ -276,17 +261,29 @@
           const splitMsg = msg.split(' ');
           const target = splitMsg[1] ? splitMsg[1].replace('@','') : user;
           removeDrawing(isAdmin ? target : user);
-        } else if (msg === '!limpiartodo' && isAdmin) {
-          clearAll();
         } else if (msg === '!testpixel' && isAdmin) {
           toggleTest();
-        } else if (msg === '!disparar' && isAdmin) {
-          shootRandomDrawing();
+        } else if (msg === '!fin' && isAdmin) {
+          toggleRain();
         }
       }
     }
 
-    // --- FUNCIÓN DE DIBUJO ---
+    function toggleRain() {
+        rainMode = !rainMode;
+        if (rainMode) {
+            drawings.forEach(d => {
+                d.rainOriginX = d.x; 
+                d.rainSpeed = 0.8 + Math.random() * 1.7; 
+                d.rainPhase = Math.random() * Math.PI * 2; 
+            });
+        } else {
+            drawings.forEach(d => {
+                d.y = LANES[d.lane]; 
+            });
+        }
+    }
+
     function createDrawing(user, fullCode, isSub, isTest, forceX) {
       if (!isTest && activeCodes.has(fullCode)) return;
 
@@ -296,68 +293,53 @@
         const isV2 = fullCode.indexOf('v2') === 0; 
 
         if (isV2) {
-          // LÓGICA V2 (NUEVA)
           const cleanCode = fullCode.substring(2);
           const parts = cleanCode.split('_');
           const headerHex = parts[0];
           const payload = parts[1];
           if (!headerHex || !payload) return;
 
-          // 1. Construir Paleta Local
           finalPalette.push('transparent'); 
           for (let i = 0; i < headerHex.length; i += 6) {
             finalPalette.push('#' + headerHex.substring(i, i+6));
           }
 
-          // 2. Decodificar Pixeles
           const binaryString = atob(payload);
           for (let i = 0; i < binaryString.length; i++) {
             const byte = binaryString.charCodeAt(i);
             pixelData.push((byte >> 4) & 0x0F);
             pixelData.push(byte & 0x0F);
           }
-
         } else {
-          // LÓGICA V1 (ANTIGUA)
           if(fullCode.indexOf('_') === -1) return;
           const parts = fullCode.split('_');
           const header = parts[0];
           const payload = parts[1];
           if (!header || !payload) return;
-
           for (let i = 0; i < payload.length; i += 2) {
             const colorIdx = parseInt(payload[i], 16);
             const count = parseInt(payload[i+1], 36);
             if(isNaN(colorIdx) || isNaN(count)) continue;
-            for (let j = 0; j < count; j++) {
-              pixelData.push(colorIdx);
-            }
+            for (let j = 0; j < count; j++) { pixelData.push(colorIdx); }
           }
-
           const usedColorsIdx = [];
           for(let i=0; i < header.length; i++) {
             if (header[i] === '1' && header[i+1] === '0') { usedColorsIdx.push(16); i++; }
             else { usedColorsIdx.push(parseInt(header[i], 16)); }
           }
-          
-          for(let k=0; k<usedColorsIdx.length; k++) {
-              finalPalette.push(colors[usedColorsIdx[k]] || 'transparent');
-          }
+          for(let k=0; k<usedColorsIdx.length; k++) { finalPalette.push(colors[usedColorsIdx[k]] || 'transparent'); }
         }
 
-        // --- RENDERIZADO ---
         const itemEl = document.createElement('div');
         itemEl.className = 'item';
         
         const canvas = document.createElement('canvas');
         canvas.width = 16; canvas.height = 16;
         const ctx = canvas.getContext('2d');
-        
-        ctx.clearRect(0, 0, 16, 16); // Limpieza de seguridad
+        ctx.clearRect(0, 0, 16, 16); 
 
         for (let k = 0; k < pixelData.length; k++) {
            const colorIndex = pixelData[k];
-           
            if (isV2) {
                if (colorIndex > 0 && colorIndex < finalPalette.length) {
                    ctx.fillStyle = finalPalette[colorIndex];
@@ -374,26 +356,22 @@
            }
         }
 
-        // --- LÓGICA DE ESTADOS Y ANIMACIONES ---
+        // 1. Configuración de SUBS
         if (isSub) {
-            // Es Sub: Animación Glow y va a la cola de espera
             itemEl.classList.add('is-sub');
             if (!isTest) itemEl.classList.add('waiting');
-        } else {
-            // NO es Sub: Animación de SALTO de bienvenida
-            if (!isTest) {
-                itemEl.classList.add('jumping');
-                // Quitar la clase después de 10 segundos
-                setTimeout(() => {
-                    if (itemEl) itemEl.classList.remove('jumping');
-                }, 16000);
-            }
         }
 
+        // 2. Configuración de SALTO
+        // SOLO LOS NORMALES saltan inmediatamente
+        if (!isTest && !isSub) {
+            itemEl.classList.add('jumping');
+            setTimeout(() => { if (itemEl) itemEl.classList.remove('jumping'); }, 16000);
+        }
+        // (Los subs saltarán DESPUÉS de su baile, en processQueue)
+
         if (testMode && !isTest) itemEl.classList.add('hidden');
-
         itemEl.appendChild(canvas);
-
         const nickEl = document.createElement('div');
         nickEl.className = 'nick'; 
         nickEl.innerText = (isSub ? '⭐ ' : '') + user;
@@ -414,21 +392,20 @@
           isTest: isTest,
           createdAt: Date.now(),
           dying: false,
-          featherFalling: false,
-          featherTimer: 0,
-          originX: 0
+          rainOriginX: 0, 
+          rainSpeed: 1, 
+          rainPhase: 0
         };
 
         if (forceX === undefined) {
           let min = -200;
-          drawings.forEach(function(d) { 
-             if(d.lane === laneIdx && d.x < min) min = d.x; 
-          });
+          drawings.forEach(function(d) { if(d.lane === laneIdx && d.x < min) min = d.x; });
           obj.x = min - 300;
         }
+        
+        obj.rainOriginX = obj.x;
 
         drawings.push(obj);
-
         if (!isTest) {
           activeCodes.add(fullCode);
           if (isSub) { subQueue.push(obj); processQueue(); }
@@ -436,38 +413,18 @@
       } catch(e) { console.error("Error al crear dibujo:", e); }
     }
 
-    function shootRandomDrawing() {
-      const candidates = drawings.filter(d => 
-        !d.dying && 
-        !d.featherFalling && 
-        !d.el.classList.contains('hidden') && 
-        !d.el.classList.contains('showcase') &&
-        !d.el.classList.contains('waiting')
-      );
-
-      if (candidates.length === 0) return; 
-
-      const victim = candidates[Math.floor(Math.random() * candidates.length)];
-      victim.featherFalling = true;
-      victim.featherTimer = 0; 
-      victim.originX = victim.x; 
-    }
-
     function toggleTest() {
       if (!testMode) {
         testMode = true;
         drawings.forEach(function(d) { if(!d.isTest) d.el.classList.add('hidden'); });
         const code = "0ce_0m17081205120k210623042501220121042103210223012103230221022103220321032101230322022103210121062102210523022302210922042102120f150g170i";
-        for (let i = 0; i < 20; i++) {
-          createDrawing('Bot_' + i, code, (i % 3 === 0), true, (Math.random() * 1900));
-        }
+        for (let i = 0; i < 20; i++) { createDrawing('Bot_' + i, code, (i % 3 === 0), true, (Math.random() * 1900)); }
       } else {
         testMode = false;
         let newDrawings = [];
         for(let k=0; k<drawings.length; k++){
             let d = drawings[k];
-            if(d.isTest) { d.el.remove(); } 
-            else { d.el.classList.remove('hidden'); newDrawings.push(d); }
+            if(d.isTest) { d.el.remove(); } else { d.el.classList.remove('hidden'); newDrawings.push(d); }
         }
         drawings = newDrawings;
       }
@@ -477,7 +434,6 @@
       if (!isShowcaseBusy && subQueue.length > 0) {
         isShowcaseBusy = true;
         const current = subQueue.shift();
-        
         current.el.classList.remove('waiting', 'hidden');
         current.el.classList.add('showcase');
         current.el.style.transform = ''; 
@@ -488,18 +444,15 @@
           drawings.forEach(function(d) { if(d.lane === current.lane && d.x < min) min = d.x; });
           current.x = min - 350;
           
+          // --- AQUÍ EL SUB EMPIEZA A SALTAR EN EL CARRIL ---
+          current.el.classList.add('jumping');
+          setTimeout(() => { if (current.el) current.el.classList.remove('jumping'); }, 16000); 
+          // ------------------------------------------------
+
           isShowcaseBusy = false;
           processQueue();
         }, 10000); 
       }
-    }
-
-    function clearAll() {
-      drawings.forEach(function(d) { d.el.remove(); });
-      drawings = []; 
-      activeCodes.clear();
-      subQueue = []; 
-      isShowcaseBusy = false;
     }
 
     function removeDrawing(u) {
