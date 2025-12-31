@@ -30,37 +30,58 @@
 
     /* LAYOUT GLOBAL */
     .app-container {
-      display: flex; flex-direction: column; gap: 15px;
-      width: 100%; max-width: 480px; 
+      display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 480px; 
     }
 
-    /* 1. ACORDEÓN PALETAS */
-    .palette-dropdown-container { width: 100%; position: relative; z-index: 100; flex-shrink: 0; }
+    /* --- ACORDEONES --- */
+    .dropdown-group {
+        display: flex; flex-direction: column; gap: 10px; width: 100%;
+        position: relative; z-index: 100; flex-shrink: 0;
+    }
 
-    .palette-toggle-btn {
+    .toggle-btn {
       width: 100%; padding: 14px;
       background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 8px;
       color: var(--twitch-color); font-weight: bold; font-size: 14px;
       cursor: pointer; display: flex; justify-content: space-between; align-items: center;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: transform 0.1s;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: background 0.1s;
     }
-    .palette-toggle-btn:active { transform: scale(0.99); }
+    .toggle-btn:active { background: #f9f9f9; }
 
-    .palettes-content {
+    /* Contenido Oculto */
+    .dropdown-content {
       max-height: 0; opacity: 0; overflow: hidden;
       transition: max-height 0.4s ease-out, opacity 0.3s ease-in;
       display: flex; flex-wrap: wrap; gap: 8px;
-      background: var(--panel-bg); padding: 0 15px;
+      background: var(--panel-bg); 
+      
+      /* Padding normal arriba/izq/abajo, pero extra a la derecha para el botón rojo */
+      padding: 0 15px; 
+      
       border: 1px solid var(--border-color); border-top: none;
       border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;
-      justify-content: center;
+      
+      /* Alineación a la izquierda para los dibujos */
+      justify-content: flex-start; 
+      
       box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-top: -4px;
       border-color: transparent; 
+      
+      /* Necesario para posicionar el botón rojo absolute */
+      position: relative; 
     }
-    .palettes-content.show { max-height: 500px; opacity: 1; padding: 15px; border-color: var(--border-color); }
+    
+    .dropdown-content.show { 
+        max-height: 500px; opacity: 1; 
+        /* Padding derecho extra (50px) para que los dibujos no toquen el botón rojo */
+        padding: 15px 55px 15px 15px; 
+        border-color: var(--border-color); overflow-y: auto; 
+    }
+    
     .arrow-icon { transition: transform 0.3s; }
     .rotate-icon { transform: rotate(180deg); }
 
+    /* BOTONES DE PALETA */
     .palette-btn {
       position: relative; background: var(--bg-color);
       border: 2px solid transparent; border-radius: 6px; padding: 3px;
@@ -76,6 +97,40 @@
     .mini-swatch:nth-child(9) { border-bottom-left-radius: 3px; }
     .mini-swatch:last-child { border-bottom-right-radius: 3px; }
 
+    /* BOTONES DE HISTORIAL */
+    .history-btn {
+        position: relative; cursor: pointer;
+        width: 34px; height: 34px; 
+        background: #eee; border: 2px solid transparent; border-radius: 4px;
+        display: flex; align-items: center; justify-content: center;
+        transition: transform 0.1s;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .history-btn:hover { transform: scale(1.1); border-color: var(--twitch-color); z-index: 10; }
+    
+    .thumb-grid {
+        display: grid; grid-template-columns: repeat(16, 1fr); 
+        width: 28px; height: 28px; background-color: white; pointer-events: none;
+    }
+    .thumb-pixel { width: 100%; height: 100%; }
+
+    /* BOTÓN BORRAR HISTORIAL (FIJO A LA DERECHA) */
+    .clear-history-btn {
+        position: absolute; /* Fijo dentro del contenedor */
+        top: 15px; /* Mismo padding que el contenedor */
+        right: 15px; /* Pegado a la derecha */
+        
+        width: 34px; height: 34px; /* Mismo tamaño que los dibujos */
+        background: #dc3545; 
+        border: none; border-radius: 4px;
+        color: white; font-size: 16px; font-weight: bold; 
+        cursor: pointer; display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        z-index: 50;
+    }
+    .clear-history-btn:active { transform: scale(0.95); }
+
+    /* Tooltip */
     .palette-btn::after {
       content: attr(data-name); position: absolute; bottom: 115%; left: 50%; transform: translateX(-50%);
       background: #222; color: #fff; padding: 4px 8px; font-size: 11px; border-radius: 4px; font-weight: bold;
@@ -86,7 +141,7 @@
 
     /* 2. ZONA PRINCIPAL */
     .workspace {
-      display: flex; flex-direction: row; gap: 12px; align-items: flex-start; 
+      display: flex; flex-direction: row; gap: 12px; align-items: flex-start; margin-top: 5px;
     }
 
     .left-column {
@@ -149,6 +204,7 @@
       cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.1s;
     }
     button:active { transform: scale(0.96); }
+    button:hover { filter: brightness(1.1); }
     
     #output {
       width: 100%; padding: 12px; box-sizing: border-box;
@@ -159,66 +215,27 @@
     }
     #output.copied { background: #28a745 !important; color: white !important; border-color: #1e7e34; }
 
-    /* --- RESPONSIVIDAD MÓVIL OPTIMIZADA (DIETA DE PIXELES) --- */
+    /* --- RESPONSIVIDAD MÓVIL --- */
     @media (max-width: 600px) {
       body {
-        height: 100vh; 
-        padding: 10px;
-        /* Padding inferior extra grande para despegar del borde de Android */
-        padding-bottom: 20px; 
-        justify-content: flex-start;
+        height: 100vh; padding: 10px; padding-bottom: 20px; justify-content: flex-start;
       }
-
-      .header-info { margin-bottom: 5px; } /* Menos aire arriba */
+      .header-info { margin-bottom: 5px; } 
       .header-info a { font-size: 22px; } 
-      
-      .app-container {
-        flex-grow: 1; height: 100%; 
-        gap: 8px; /* Menos hueco entre bloques */
-      }
+      .app-container { flex-grow: 1; height: 100%; gap: 8px; }
+      .workspace { flex-direction: column; align-items: stretch; flex-grow: 1; gap: 10px; }
+      .left-column { width: 100%; flex-grow: 0; gap: 8px; }
+      .grid-wrap { width: 100%; max-width: none; }
+      button, .toggle-btn, #output { padding: 10px; font-size: 14px; }
+      #output { padding: 10px; font-size: 11px; }
 
-      .workspace {
-        flex-direction: column; align-items: stretch;
-        flex-grow: 1; 
-        gap: 10px; /* Menos hueco entre canvas y colores */
-      }
-
-      .left-column {
-        width: 100%; 
-        /* Quitamos flex-grow para que no empuje hacia abajo a lo loco */
-        flex-grow: 0; 
-        gap: 8px; /* Hueco reducido entre canvas/botones/input */
-      }
-
-      /* Botones más delgados (Compactos) */
-      button, .palette-toggle-btn {
-        padding: 10px; /* Reducido de 16 a 10px */
-        font-size: 14px;
-      }
-      
-      /* Input más delgado */
-      #output {
-        padding: 10px; /* Reducido */
-        font-size: 11px;
-      }
-
-      /* BARRA DE COLORES HORIZONTAL (Abajo) */
       .right-column {
         width: 100%; flex-direction: row;
-        height: 55px; /* Altura compacta */
-        flex-shrink: 0; 
-        padding: 4px; gap: 4px;
-        
-        /* AQUÍ LA SOLUCIÓN: Margen inferior GRANDE para esquivar botones Android */
-        margin-bottom: 60px; 
-        
-        /* Opcional: usar safe-area por si acaso */
+        height: 55px; flex-shrink: 0; padding: 4px; gap: 4px;
+        margin-bottom: 60px; /* Margen seguridad Android */
         margin-bottom: calc(60px + env(safe-area-inset-bottom));
-
-        border-radius: 8px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
       }
-      
       .active-swatch { min-height: 100%; min-width: 0; }
     }
   </style>
@@ -232,49 +249,58 @@
 
   <div class="app-container">
     
-    <div class="palette-dropdown-container">
-      <button class="palette-toggle-btn" onclick="togglePalettes()">
-        <span>🎨 CAMBIAR PALETA</span>
-        <span class="arrow-icon" id="arrowIcon">▼</span>
-      </button>
-      <div class="palettes-content" id="palettesList"></div>
+    <div class="dropdown-group">
+        
+        <div>
+          <button class="toggle-btn" onclick="toggleAccordion('palettes')">
+            <span>🎨 CAMBIAR PALETA</span>
+            <span class="arrow-icon" id="arrow-palettes">▼</span>
+          </button>
+          <div class="dropdown-content" id="palettesList" style="justify-content: center;"></div>
+        </div>
+
+        <div>
+          <button class="toggle-btn" onclick="toggleAccordion('history')">
+            <span>💾 DIBUJOS CREADOS</span>
+            <span class="arrow-icon" id="arrow-history">▼</span>
+          </button>
+          
+          <div class="dropdown-content" id="historyList">
+             </div>
+        </div>
+
     </div>
 
     <div class="workspace">
-      
       <div class="left-column">
         <div class="grid-wrap">
           <div id="grid"></div>
         </div>
-
         <div class="controls">
           <button onclick="clearCanvas()" style="background:#dc3545">Borrar</button>
-          <button onclick="generateCode()">Generar</button>
+          <button onclick="generateCodeAndSave()">Generar</button>
         </div>
-
         <input type="text" id="output" readonly onclick="copyToClipboard()" placeholder="Toca Generar para copiar">
       </div>
-
       <div class="right-column" id="activeColors"></div>
-
     </div>
 
   </div>
 
   <script>
+    // --- PALETAS ---
     const PALETTES = {
-      pico8:    { name: "Pico-8",     colors: ['#000000','#1D2B53','#7E2553','#008751','#AB5236','#5F574F','#C2C3C7','#FFF1E8','#FF004D','#FFA300','#FFEC27','#00E436','#29ADFF','#83769C','#FF77A8','#FFCCAA'] },
-      snes:     { name: "SNES",       colors: ['#000000','#211e20','#555568','#a0a08b','#e9efec','#65737e','#7c6f64','#558b2f','#33691e','#1b5e20','#0277bd','#01579b','#b71c1c','#d32f2f','#ff6f00','#ffb300'] },
-      megadrive:{ name: "MegaDrive",  colors: ['#000000','#222222','#444444','#aaaaaa','#ffffff','#0000ff','#000077','#ff0000','#770000','#ffff00','#777700','#00ff00','#007700','#ff00ff','#00ffff','#000033'] },
-      arne16:   { name: "Arne-16",    colors: ['#000000','#9D9D9D','#FFFFFF','#BE2633','#E06F8B','#493C2B','#A46422','#EB8931','#F7E26B','#2F484E','#44891A','#A3CE27','#1B2632','#005784','#31A2F2','#B2DCEF'] },
-      standard: { name: "Estándar",   colors: ['#000000','#aa0000','#00aa00','#aa5500','#0000aa','#aa00aa','#00aaaa','#aaaaaa','#555555','#ff5555','#55ff55','#ffff55','#5555ff','#ff55ff','#55ffff','#ffffff'] },
-      famicom:  { name: "NES",        colors: ['#000000','#F83800','#F0D0B0','#503000','#FFE0A8','#0058F8','#00A800','#F8D878','#0058F8','#F87858','#FCA044','#F8B800','#B8F818','#58D854','#58F898','#FFFFFF'] },
-      gbc:      { name: "GBC",        colors: ['#000000','#000000','#333333','#666666','#999999','#cccccc','#ffffff','#ff0000','#00ff00','#0000ff','#ffff00','#00ffff','#ff00ff','#ff8800','#8800ff','#00ff88'] },
-      pastel:   { name: "Pastel",     colors: ['#6b5b95','#feb236','#d64161','#ff7b25','#d6cbd3','#eca1a6','#bdcebe','#ada397','#f7786b','#91a8d0','#f7cac9','#92a8d1','#b5e7a0','#ffcc5c','#ff6f69','#e3e0cc'] },
-      skin:     { name: "Piel",       colors: ['#3b240e','#593110','#754012','#8f5218','#ac6720','#c27e32','#d6964a','#e6af66','#f2c885','#fce1a2','#fff6cc','#4a2e16','#693e1b','#8f5624','#b87635','#e3a059'] },
-      gameboy:  { name: "Gameboy",    colors: ['#0f380f','#306230','#8bac0f','#9bbc0f','#0f380f','#306230','#8bac0f','#9bbc0f','#0f380f','#306230','#8bac0f','#9bbc0f','#0f380f','#306230','#8bac0f','#9bbc0f'] },
-      neon:     { name: "Neon",       colors: ['#000000','#2b2b2b','#383838','#08F7FE','#09FBD3','#FE53BB','#F5D300','#FFACFC','#7122FA','#560A86','#011FFD','#FF2281','#75D5FD','#E2D1F9','#31112C','#FFFFFF'] },
-      mono:     { name: "B/N",        colors: ['#000000','#111111','#222222','#333333','#444444','#555555','#666666','#777777','#888888','#999999','#aaaaaa','#bbbbbb','#cccccc','#dddddd','#eeeeee','#ffffff'] }
+      standard: { name: "Estándar",   colors: ['#000000', '#aa0000','#00aa00','#aa5500','#0000aa','#aa00aa','#00aaaa','#aaaaaa','#555555','#ff5555','#55ff55','#ffff55','#5555ff','#ff55ff','#55ffff','#ffffff'] },
+      pico8:    { name: "Pico-8",     colors: ['#000000', '#7E2553','#008751','#AB5236','#1D2B53','#5F574F','#83769C','#C2C3C7','#FFCCAA','#FF004D','#00E436','#FFEC27','#29ADFF','#FF77A8','#FFF1E8','#FFFFFF'] },
+      snes:     { name: "SNES",       colors: ['#000000', '#7c6f64','#33691e','#7f5539','#01579b','#4a148c','#006064','#b0bec5','#424242','#b71c1c','#558b2f','#fbc02d','#0288d1','#ba68c8','#26c6da','#ffffff'] },
+      arne16:   { name: "Arne-16",    colors: ['#000000', '#BE2633','#44891A','#A46422','#1B2632','#493C2B','#2F484E','#9D9D9D','#404040','#E06F8B','#A3CE27','#EB8931','#005784','#B2DCEF','#31A2F2','#FFFFFF'] },
+      famicom:  { name: "NES",        colors: ['#000000', '#881400','#007800','#a87000','#0000bc','#880070','#007878','#bcbcbc','#503000','#f83800','#58f898','#f8b800','#0078f8','#f878f8','#3cbcfc','#ffffff'] },
+      gbc:      { name: "GBC",        colors: ['#000000', '#880000','#006600','#886600','#000088','#660066','#006666','#b0b0b0','#404040','#ff0000','#00ff00','#ffff00','#0000ff','#ff00ff','#00ffff','#ffffff'] },
+      pastel:   { name: "Pastel",     colors: ['#5e505b', '#d64161','#779161','#c48d44','#6b5b95','#8e5572','#507c85','#b0a194','#7a726d','#ff6f69','#b5e7a0','#feb236','#92a8d1','#f7cac9','#88d8b0','#fff2e6'] },
+      neon:     { name: "Neon",       colors: ['#050505', '#7a0416','#083315','#5e3e02','#0a0a4a','#380b4d','#023d3d','#8a8a8a','#2e2e2e','#ff003c','#00ff55','#f2ff00','#00ccff','#ff00ff','#00ffff','#ffffff'] },
+      gameboy:  { name: "Gameboy",    colors: ['#0f380f', '#0f380f','#0f380f','#306230','#0f380f','#306230','#306230','#8bac0f','#306230','#8bac0f','#9bbc0f','#9bbc0f','#8bac0f','#9bbc0f','#9bbc0f','#9bbc0f'] },
+      mono:     { name: "B/N",        colors: ['#000000', '#222222','#333333','#444444','#111111','#282828','#383838','#999999','#555555','#777777','#aaaaaa','#cccccc','#666666','#bbbbbb','#dddddd','#ffffff'] },
+      skin:     { name: "Piel",       colors: ['#2b1d14', '#422816','#593820','#6e4626','#362215','#4f2f1a','#633c21','#d4aa7d','#805030','#a66b44','#c48454','#e3a068','#cfa276','#e8c39e','#f5e1c4','#fff8ed'] }
     };
 
     let currentKey = 'pico8';
@@ -308,11 +334,21 @@
       cell.style.backgroundColor = (idx === 0) ? "" : currentColors[idx];
     }
 
-    function togglePalettes() {
-      const content = document.getElementById('palettesList');
-      const arrow = document.getElementById('arrowIcon');
-      content.classList.toggle('show');
-      arrow.classList.toggle('rotate-icon');
+    // --- UI LOGIC ---
+    function toggleAccordion(id) {
+      const content = document.getElementById(id + 'List');
+      const arrow = document.getElementById('arrow-' + id);
+      
+      if (content.classList.contains('show')) {
+         content.classList.remove('show');
+         arrow.classList.remove('rotate-icon');
+      } else {
+         document.querySelectorAll('.dropdown-content').forEach(el => el.classList.remove('show'));
+         document.querySelectorAll('.arrow-icon').forEach(el => el.classList.remove('rotate-icon'));
+         content.classList.add('show');
+         arrow.classList.add('rotate-icon');
+         if(id === 'history') renderHistory();
+      }
     }
 
     function renderPalettesBar() {
@@ -359,7 +395,87 @@
       cells.forEach(c => updateVisual(c));
     }
 
-    function generateCode() {
+    // --- HISTORIAL ---
+    function saveDrawing() {
+       const pixelData = cells.map(c => parseInt(c.dataset.idx));
+       if (pixelData.every(p => p === 0)) return; // No guardar vacíos
+
+       const drawing = { data: pixelData, palette: currentKey, timestamp: Date.now() };
+       let history = JSON.parse(localStorage.getItem('pixelArtHistory') || '[]');
+       
+       if (history.length > 0) {
+           const last = history[0];
+           if (JSON.stringify(last.data) === JSON.stringify(drawing.data) && last.palette === drawing.palette) return;
+       }
+
+       history.unshift(drawing);
+       if (history.length > 30) history.pop();
+       localStorage.setItem('pixelArtHistory', JSON.stringify(history));
+       renderHistory();
+    }
+
+    function loadDrawing(index) {
+        const history = JSON.parse(localStorage.getItem('pixelArtHistory') || '[]');
+        const drawing = history[index];
+        if (!drawing) return;
+        setPalette(drawing.palette);
+        drawing.data.forEach((val, i) => {
+            cells[i].dataset.idx = val;
+            updateVisual(cells[i]);
+        });
+        toggleAccordion('history');
+    }
+    
+    function clearHistory() {
+        if(confirm("¿Estás seguro de borrar todos los dibujos guardados?")) {
+            localStorage.removeItem('pixelArtHistory');
+            renderHistory();
+        }
+    }
+
+    function renderHistory() {
+        const container = document.getElementById('historyList');
+        container.innerHTML = '';
+        const history = JSON.parse(localStorage.getItem('pixelArtHistory') || '[]');
+
+        if (history.length === 0) {
+            container.innerHTML = '<div style="font-size:12px; opacity:0.6; padding:10px;">No hay dibujos guardados</div>';
+            return;
+        }
+
+        // Renderizar Dibujos
+        history.forEach((draw, index) => {
+            const btn = document.createElement('div');
+            btn.className = 'history-btn';
+            btn.onclick = () => loadDrawing(index);
+
+            const gridPreview = document.createElement('div');
+            gridPreview.className = 'thumb-grid';
+            const pal = ['transparent', ...PALETTES[draw.palette].colors];
+
+            draw.data.forEach(idx => {
+                const p = document.createElement('div');
+                p.className = 'thumb-pixel';
+                if(idx !== 0) p.style.backgroundColor = pal[idx];
+                gridPreview.appendChild(p);
+            });
+
+            btn.appendChild(gridPreview);
+            container.appendChild(btn);
+        });
+        
+        // Renderizar Botón Borrar (ABSOLUTO A LA DERECHA)
+        const clearBtn = document.createElement('button');
+        clearBtn.className = 'clear-history-btn';
+        clearBtn.innerHTML = "✖"; // Icono de borrar
+        clearBtn.title = "Borrar todo el historial";
+        clearBtn.onclick = clearHistory;
+        container.appendChild(clearBtn);
+    }
+
+    // --- GENERAR ---
+    function generateCodeAndSave() {
+      saveDrawing();
       const pixelData = cells.map(c => parseInt(c.dataset.idx));
       const uniqueIndices = [...new Set(pixelData)].filter(i => i !== 0).sort((a,b) => a-b);
       if (uniqueIndices.length > 16) { alert("Error: Colores muy complejos."); return; }
@@ -385,8 +501,10 @@
       catch(e) { out.select(); document.execCommand("copy"); }
     }
 
+    // Inicio
     renderPalettesBar();
     renderActiveColors();
+    renderHistory();
   </script>
 </body>
 </html>
