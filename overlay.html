@@ -7,7 +7,6 @@
     html, body { 
       margin: 0; padding: 0; background: transparent !important; 
       overflow: hidden; width: 1920px; height: 1080px;
-      /* Fuente de emojis nativa para forzar el color amarillo en la estrella */
       font-family: 'Segoe UI', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
     }
     
@@ -55,7 +54,7 @@
       to   { filter: drop-shadow(0 0 2px #FFD700) drop-shadow(0 0 12px #FFA500); }
     }
 
-    /* --- NOMBRE DE USUARIO (ESTÁNDAR) --- */
+    /* --- NOMBRE DE USUARIO --- */
     .nick { 
       color: white; 
       font-weight: 900;
@@ -64,19 +63,14 @@
       text-align: center;
       margin-top: 2px;
       white-space: nowrap;
-      
-      /* Borde negro duro (Hard Shadow) para legibilidad perfecta */
       text-shadow: 
         2px 0 0 #000, -2px 0 0 #000, 
         0 2px 0 #000, 0 -2px 0 #000, 
         2px 2px 0 #000;
     }
 
-    /* --- NOMBRE DE SUSCRIPTOR (AMARILLO + GLOW) --- */
     .is-sub .nick {
-      color: #FFD700 !important; /* Texto Amarillo Oro */
-      
-      /* Borde Negro + Resplandor Dorado */
+      color: #FFD700 !important; 
       text-shadow: 
         2px 0 0 #000, -2px 0 0 #000, 
         0 2px 0 #000, 0 -2px 0 #000,
@@ -107,7 +101,7 @@
   </style>
 </head>
 <body>
-  <div id="status">INICIANDO...</div>
+  <div id="status">CARGANDO...</div>
   <div id="container"></div>
 
   <script>
@@ -147,27 +141,23 @@
         }
 
         // --- LÓGICA DE MUERTE POR DISPARO (FEATHER FALL / PLUMA) ---
-        // Esto simula la caída de hoja de Mario 3
         if (d.featherFalling) {
-            d.featherTimer += 0.12; // Velocidad de la oscilación
-            d.y += 3.5;             // Velocidad de caída constante
+            d.featherTimer += 0.12; 
+            d.y += 3.5;             
 
-            // Oscilación en X (Sway)
-            const sway = Math.sin(d.featherTimer) * 60; // 60px de amplitud
+            const sway = Math.sin(d.featherTimer) * 60; 
             d.x = d.originX + sway;
 
-            // Rotación suave acompañando el movimiento
-            d.rot = Math.cos(d.featherTimer) * 20; // 20 grados de inclinación
+            d.rot = Math.cos(d.featherTimer) * 20; 
 
             d.el.style.transform = 'translate3d(' + d.x + 'px, ' + d.y + 'px, 0) rotate(' + d.rot + 'deg)';
             
-            // Si sale de pantalla por abajo, borrar
             if (d.y > 1200) {
                 d.el.remove();
                 if(d.code) activeCodes.delete(d.code);
                 drawings.splice(i, 1);
             }
-            continue; // Saltamos el resto de la lógica para este dibujo
+            continue; 
         }
 
         // --- MUERTE NATURAL (TIEMPO DE VIDA) ---
@@ -177,7 +167,7 @@
         }
 
         if (d.dying) {
-            d.vy += 0.5; // Gravedad
+            d.vy += 0.5; 
             d.y += d.vy; 
             d.rot += 5;
             d.el.style.transform = 'translate3d(' + d.x + 'px, ' + d.y + 'px, 0) rotate(' + d.rot + 'deg)';
@@ -214,7 +204,9 @@
       
       const statusEl = document.getElementById('status');
       statusEl.style.display = 'block';
-      statusEl.innerText = "CONECTANDO...";
+      
+      // --- CAMBIO AQUÍ: TEXTO DINÁMICO ---
+      statusEl.innerText = "CONECTANDO A " + CHANNEL.toUpperCase() + "...";
       statusEl.style.color = "#ffcc00";
 
       ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
@@ -276,44 +268,49 @@
           clearAll();
         } else if (msg === '!testpixel' && isAdmin) {
           toggleTest();
-        
-        // --- COMANDO !SHOOT AGREGADO AQUÍ ---
-        } else if (msg === '!shoot' && isAdmin) {
+        } else if (msg === '!disparar' && isAdmin) {
           shootRandomDrawing();
         }
       }
     }
 
-    // --- FUNCIÓN INTELIGENTE DE DIBUJO (Soporta V1 y V2) ---
+    // --- FUNCIÓN DE DIBUJO ---
     function createDrawing(user, fullCode, isSub, isTest, forceX) {
       if (!isTest && activeCodes.has(fullCode)) return;
 
       try {
-        let header, payload, pixelData = [];
+        let pixelData = [];
+        let finalPalette = []; 
         const isV2 = fullCode.indexOf('v2') === 0; 
 
         if (isV2) {
-          // --- MODO NUEVO V2 (Base64) ---
-          const cleanCode = fullCode.substring(2); // Quitar 'v2'
+          // LÓGICA V2 (NUEVA)
+          const cleanCode = fullCode.substring(2);
           const parts = cleanCode.split('_');
-          header = parts[0];
-          payload = parts[1];
-          if (!header || !payload) return;
+          const headerHex = parts[0];
+          const payload = parts[1];
+          if (!headerHex || !payload) return;
 
-          const binaryString = atob(payload); // Decodificar Base64
+          // 1. Construir Paleta Local
+          finalPalette.push('transparent'); 
+          for (let i = 0; i < headerHex.length; i += 6) {
+            finalPalette.push('#' + headerHex.substring(i, i+6));
+          }
+
+          // 2. Decodificar Pixeles
+          const binaryString = atob(payload);
           for (let i = 0; i < binaryString.length; i++) {
             const byte = binaryString.charCodeAt(i);
-            const p1 = (byte >> 4) & 0x0F;
-            const p2 = byte & 0x0F;
-            pixelData.push(p1);
-            pixelData.push(p2);
+            pixelData.push((byte >> 4) & 0x0F);
+            pixelData.push(byte & 0x0F);
           }
+
         } else {
-          // --- MODO ANTIGUO (Retrocompatibilidad) ---
+          // LÓGICA V1 (ANTIGUA)
           if(fullCode.indexOf('_') === -1) return;
           const parts = fullCode.split('_');
-          header = parts[0];
-          payload = parts[1];
+          const header = parts[0];
+          const payload = parts[1];
           if (!header || !payload) return;
 
           for (let i = 0; i < payload.length; i += 2) {
@@ -324,15 +321,19 @@
               pixelData.push(colorIdx);
             }
           }
+
+          const usedColorsIdx = [];
+          for(let i=0; i < header.length; i++) {
+            if (header[i] === '1' && header[i+1] === '0') { usedColorsIdx.push(16); i++; }
+            else { usedColorsIdx.push(parseInt(header[i], 16)); }
+          }
+          
+          for(let k=0; k<usedColorsIdx.length; k++) {
+              finalPalette.push(colors[usedColorsIdx[k]] || 'transparent');
+          }
         }
 
         // --- RENDERIZADO ---
-        const usedColorsIdx = [];
-        for(let i=0; i < header.length; i++) {
-          if (header[i] === '1' && header[i+1] === '0') { usedColorsIdx.push(16); i++; }
-          else { usedColorsIdx.push(parseInt(header[i], 16)); }
-        }
-
         const itemEl = document.createElement('div');
         itemEl.className = 'item';
         
@@ -340,11 +341,24 @@
         canvas.width = 16; canvas.height = 16;
         const ctx = canvas.getContext('2d');
         
+        ctx.clearRect(0, 0, 16, 16); // Limpieza de seguridad
+
         for (let k = 0; k < pixelData.length; k++) {
-           const globalColorIdx = usedColorsIdx[pixelData[k]];
-           ctx.fillStyle = colors[globalColorIdx] || 'transparent';
-           if (ctx.fillStyle !== 'transparent') {
-             ctx.fillRect(k % 16, Math.floor(k / 16), 1, 1);
+           const colorIndex = pixelData[k];
+           
+           if (isV2) {
+               if (colorIndex > 0 && colorIndex < finalPalette.length) {
+                   ctx.fillStyle = finalPalette[colorIndex];
+                   ctx.fillRect(k % 16, Math.floor(k / 16), 1, 1);
+               }
+           } else {
+               if(colorIndex < finalPalette.length) {
+                   const color = finalPalette[colorIndex];
+                   if(color !== 'transparent') {
+                       ctx.fillStyle = color;
+                       ctx.fillRect(k % 16, Math.floor(k / 16), 1, 1);
+                   }
+               }
            }
         }
 
@@ -356,7 +370,6 @@
 
         const nickEl = document.createElement('div');
         nickEl.className = 'nick'; 
-        // Estrella amarilla heredada por estilo
         nickEl.innerText = (isSub ? '⭐ ' : '') + user;
         itemEl.appendChild(nickEl);
         
@@ -375,7 +388,7 @@
           isTest: isTest,
           createdAt: Date.now(),
           dying: false,
-          featherFalling: false, // Nuevo estado para !shoot
+          featherFalling: false,
           featherTimer: 0,
           originX: 0
         };
@@ -394,12 +407,10 @@
           activeCodes.add(fullCode);
           if (isSub) { subQueue.push(obj); processQueue(); }
         }
-      } catch(e) { console.error(e); }
+      } catch(e) { console.error("Error al crear dibujo:", e); }
     }
 
-    // --- FUNCIÓN PARA EJECUTAR EL DISPARO ---
     function shootRandomDrawing() {
-      // Filtrar candidatos (que no se estén muriendo, ni sean la animación de sub, etc.)
       const candidates = drawings.filter(d => 
         !d.dying && 
         !d.featherFalling && 
@@ -408,22 +419,18 @@
         !d.el.classList.contains('waiting')
       );
 
-      if (candidates.length === 0) return; // No hay a quien disparar
+      if (candidates.length === 0) return; 
 
-      // Elegir víctima aleatoria
       const victim = candidates[Math.floor(Math.random() * candidates.length)];
-      
-      // Configurar estado de caída estilo pluma
       victim.featherFalling = true;
-      victim.featherTimer = 0; // Para el seno/coseno
-      victim.originX = victim.x; // Guardamos el eje central de la oscilación
+      victim.featherTimer = 0; 
+      victim.originX = victim.x; 
     }
 
     function toggleTest() {
       if (!testMode) {
         testMode = true;
         drawings.forEach(function(d) { if(!d.isTest) d.el.classList.add('hidden'); });
-        // Código de prueba
         const code = "0ce_0m17081205120k210623042501220121042103210223012103230221022103220321032101230322022103210121062102210523022302210922042102120f150g170i";
         for (let i = 0; i < 20; i++) {
           createDrawing('Bot_' + i, code, (i % 3 === 0), true, (Math.random() * 1900));
@@ -447,7 +454,6 @@
         
         current.el.classList.remove('waiting', 'hidden');
         current.el.classList.add('showcase');
-        
         current.el.style.transform = ''; 
         
         setTimeout(function() {
