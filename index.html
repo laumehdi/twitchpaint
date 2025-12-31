@@ -28,23 +28,18 @@
     .header-info a { font-size: 32px; color: var(--twitch-color); text-decoration: none; font-weight: 900; letter-spacing: -0.5px; }
     .header-info p { margin: 5px 0; font-weight: 700; font-size: 14px; opacity: 0.8; letter-spacing: 1px; text-transform: uppercase; }
 
-    /* --- LAYOUT GLOBAL --- */
+    /* LAYOUT GLOBAL */
     .app-container {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      width: 100%;
-      max-width: 480px; 
+      display: flex; flex-direction: column; gap: 15px;
+      width: 100%; max-width: 480px; 
     }
 
-    /* 1. ACORDEÓN DE PALETAS */
+    /* 1. ACORDEÓN PALETAS */
     .palette-dropdown-container { width: 100%; position: relative; z-index: 100; flex-shrink: 0; }
 
     .palette-toggle-btn {
       width: 100%; padding: 14px;
-      background: var(--panel-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
+      background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 8px;
       color: var(--twitch-color); font-weight: bold; font-size: 14px;
       cursor: pointer; display: flex; justify-content: space-between; align-items: center;
       box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: transform 0.1s;
@@ -55,17 +50,15 @@
       max-height: 0; opacity: 0; overflow: hidden;
       transition: max-height 0.4s ease-out, opacity 0.3s ease-in;
       display: flex; flex-wrap: wrap; gap: 8px;
-      background: var(--panel-bg);
-      padding: 0 15px;
+      background: var(--panel-bg); padding: 0 15px;
       border: 1px solid var(--border-color); border-top: none;
       border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;
       justify-content: center;
       box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-top: -4px;
       border-color: transparent; 
     }
-    
     .palettes-content.show { max-height: 500px; opacity: 1; padding: 15px; border-color: var(--border-color); }
-    .arrow-icon { transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1); }
+    .arrow-icon { transition: transform 0.3s; }
     .rotate-icon { transform: rotate(180deg); }
 
     .palette-btn {
@@ -96,7 +89,6 @@
       display: flex; flex-direction: row; gap: 12px; align-items: flex-start; 
     }
 
-    /* Columna IZQUIERDA */
     .left-column {
       display: flex; flex-direction: column; gap: 10px;
       flex-grow: 1; width: 340px; 
@@ -120,7 +112,6 @@
 
     .cell { border: 1px solid rgba(0,0,0,0.05); background-color: transparent; touch-action: none; }
 
-    /* Columna DERECHA (Selector) */
     .right-column {
       display: flex; flex-direction: column;
       width: 45px; height: auto; align-self: stretch; 
@@ -151,7 +142,6 @@
       content: '×'; color: #ff4444; position: absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-weight:bold; font-size: 14px;
     }
 
-    /* CONTROLES */
     .controls { display: flex; gap: 10px; }
     button {
       flex: 1; padding: 12px; border: none; border-radius: 8px;
@@ -159,7 +149,6 @@
       cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.1s;
     }
     button:active { transform: scale(0.96); }
-    button:hover { filter: brightness(1.1); }
     
     #output {
       width: 100%; padding: 12px; box-sizing: border-box;
@@ -170,47 +159,64 @@
     }
     #output.copied { background: #28a745 !important; color: white !important; border-color: #1e7e34; }
 
-    /* --- RESPONSIVIDAD MÓVIL OPTIMIZADA --- */
+    /* --- RESPONSIVIDAD MÓVIL OPTIMIZADA (DIETA DE PIXELES) --- */
     @media (max-width: 600px) {
       body {
         height: 100vh; 
         padding: 10px;
-        /* Padding inferior extra grande para evitar barra Android */
+        /* Padding inferior extra grande para despegar del borde de Android */
         padding-bottom: 20px; 
         justify-content: flex-start;
       }
 
-      .header-info { margin-bottom: 10px; }
-      .header-info a { font-size: 24px; } 
+      .header-info { margin-bottom: 5px; } /* Menos aire arriba */
+      .header-info a { font-size: 22px; } 
       
       .app-container {
-        flex-grow: 1; height: 100%; gap: 10px;
+        flex-grow: 1; height: 100%; 
+        gap: 8px; /* Menos hueco entre bloques */
       }
 
       .workspace {
         flex-direction: column; align-items: stretch;
         flex-grow: 1; 
+        gap: 10px; /* Menos hueco entre canvas y colores */
       }
 
       .left-column {
-        width: 100%; flex-grow: 1; 
-        justify-content: space-between; gap: 15px; 
+        width: 100%; 
+        /* Quitamos flex-grow para que no empuje hacia abajo a lo loco */
+        flex-grow: 0; 
+        gap: 8px; /* Hueco reducido entre canvas/botones/input */
       }
 
-      .grid-wrap { width: 100%; max-width: none; }
-
-      button, .palette-toggle-btn, #output { padding: 16px; font-size: 16px; }
+      /* Botones más delgados (Compactos) */
+      button, .palette-toggle-btn {
+        padding: 10px; /* Reducido de 16 a 10px */
+        font-size: 14px;
+      }
+      
+      /* Input más delgado */
+      #output {
+        padding: 10px; /* Reducido */
+        font-size: 11px;
+      }
 
       /* BARRA DE COLORES HORIZONTAL (Abajo) */
       .right-column {
         width: 100%; flex-direction: row;
-        height: 60px; flex-shrink: 0; 
-        padding: 5px; gap: 5px;
-        /* AQUÍ ESTÁ EL ARREGLO CLAVE: MARGEN INFERIOR */
-        margin-bottom: 40px; 
-        /* Borde redondeado completo para que parezca flotante */
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        height: 55px; /* Altura compacta */
+        flex-shrink: 0; 
+        padding: 4px; gap: 4px;
+        
+        /* AQUÍ LA SOLUCIÓN: Margen inferior GRANDE para esquivar botones Android */
+        margin-bottom: 60px; 
+        
+        /* Opcional: usar safe-area por si acaso */
+        margin-bottom: calc(60px + env(safe-area-inset-bottom));
+
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
       }
       
       .active-swatch { min-height: 100%; min-width: 0; }
@@ -231,9 +237,7 @@
         <span>🎨 CAMBIAR PALETA</span>
         <span class="arrow-icon" id="arrowIcon">▼</span>
       </button>
-      
-      <div class="palettes-content" id="palettesList">
-        </div>
+      <div class="palettes-content" id="palettesList"></div>
     </div>
 
     <div class="workspace">
@@ -251,8 +255,7 @@
         <input type="text" id="output" readonly onclick="copyToClipboard()" placeholder="Toca Generar para copiar">
       </div>
 
-      <div class="right-column" id="activeColors">
-        </div>
+      <div class="right-column" id="activeColors"></div>
 
     </div>
 
@@ -279,7 +282,6 @@
     let selectedIdx = 1; 
     let isDrawing = false;
     
-    // GRID
     const grid = document.getElementById('grid');
     const cells = [];
     for (let i = 0; i < 256; i++) {
@@ -306,7 +308,6 @@
       cell.style.backgroundColor = (idx === 0) ? "" : currentColors[idx];
     }
 
-    // --- UI LOGIC ---
     function togglePalettes() {
       const content = document.getElementById('palettesList');
       const arrow = document.getElementById('arrowIcon');
@@ -326,9 +327,7 @@
           m.className = 'mini-swatch'; m.style.backgroundColor = c;
           btn.appendChild(m);
         });
-        
         btn.onclick = () => { setPalette(key); };
-        
         container.appendChild(btn);
       }
     }
@@ -336,9 +335,7 @@
     function renderActiveColors() {
       const container = document.getElementById('activeColors');
       container.innerHTML = '';
-      for (let i = 1; i < currentColors.length; i++) {
-        createSwatch(container, i);
-      }
+      for (let i = 1; i < currentColors.length; i++) { createSwatch(container, i); }
       createSwatch(container, 0);
     }
 
@@ -347,7 +344,6 @@
       el.className = 'active-swatch' + (idx === selectedIdx ? ' selected' : '');
       if (idx === 0) el.classList.add('bg-transp');
       else el.style.backgroundColor = currentColors[idx];
-      
       el.onclick = () => {
         document.querySelectorAll('.active-swatch').forEach(s => s.classList.remove('selected'));
         el.classList.add('selected'); selectedIdx = idx;
@@ -363,13 +359,10 @@
       cells.forEach(c => updateVisual(c));
     }
 
-    // --- CODE GEN ---
     function generateCode() {
       const pixelData = cells.map(c => parseInt(c.dataset.idx));
       const uniqueIndices = [...new Set(pixelData)].filter(i => i !== 0).sort((a,b) => a-b);
-      
       if (uniqueIndices.length > 16) { alert("Error: Colores muy complejos."); return; }
-
       const header = uniqueIndices.map(idx => currentColors[idx].replace('#','')).join('');
       let bin = "";
       for (let i = 0; i < pixelData.length; i += 2) {
