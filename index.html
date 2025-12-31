@@ -28,16 +28,10 @@
     .header-info a { font-size: 32px; color: var(--twitch-color); text-decoration: none; font-weight: 900; letter-spacing: -0.5px; }
     .header-info p { margin: 5px 0; font-weight: 700; font-size: 14px; opacity: 0.8; letter-spacing: 1px; text-transform: uppercase; }
 
-    /* LAYOUT GLOBAL */
-    .app-container {
-      display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 480px; 
-    }
+    .app-container { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 480px; }
 
     /* --- ACORDEONES --- */
-    .dropdown-group {
-        display: flex; flex-direction: column; gap: 10px; width: 100%;
-        position: relative; z-index: 100; flex-shrink: 0;
-    }
+    .dropdown-group { display: flex; flex-direction: column; gap: 10px; width: 100%; position: relative; z-index: 100; flex-shrink: 0; }
 
     .toggle-btn {
       width: 100%; padding: 14px;
@@ -48,40 +42,28 @@
     }
     .toggle-btn:active { background: #f9f9f9; }
 
-    /* Contenido Oculto */
     .dropdown-content {
       max-height: 0; opacity: 0; overflow: hidden;
       transition: max-height 0.4s ease-out, opacity 0.3s ease-in;
       display: flex; flex-wrap: wrap; gap: 8px;
-      background: var(--panel-bg); 
-      
-      /* Padding normal arriba/izq/abajo, pero extra a la derecha para el botón rojo */
-      padding: 0 15px; 
-      
+      background: var(--panel-bg); padding: 0 15px; 
       border: 1px solid var(--border-color); border-top: none;
       border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;
-      
-      /* Alineación a la izquierda para los dibujos */
       justify-content: flex-start; 
-      
       box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-top: -4px;
-      border-color: transparent; 
-      
-      /* Necesario para posicionar el botón rojo absolute */
-      position: relative; 
+      border-color: transparent; position: relative; 
     }
     
     .dropdown-content.show { 
         max-height: 500px; opacity: 1; 
-        /* Padding derecho extra (50px) para que los dibujos no toquen el botón rojo */
-        padding: 15px 55px 15px 15px; 
+        padding: 15px 55px 15px 15px; /* Padding derecho extra para botón borrar */
         border-color: var(--border-color); overflow-y: auto; 
     }
     
     .arrow-icon { transition: transform 0.3s; }
     .rotate-icon { transform: rotate(180deg); }
 
-    /* BOTONES DE PALETA */
+    /* PALETAS */
     .palette-btn {
       position: relative; background: var(--bg-color);
       border: 2px solid transparent; border-radius: 6px; padding: 3px;
@@ -97,14 +79,21 @@
     .mini-swatch:nth-child(9) { border-bottom-left-radius: 3px; }
     .mini-swatch:last-child { border-bottom-right-radius: 3px; }
 
-    /* BOTONES DE HISTORIAL */
+    /* TOOLTIP DEBAJO */
+    .palette-btn::after {
+      content: attr(data-name); position: absolute; top: 115%; left: 50%; transform: translateX(-50%);
+      background: #222; color: #fff; padding: 4px 8px; font-size: 11px; border-radius: 4px; font-weight: bold;
+      white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.2s; z-index: 50;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .palette-btn:hover::after { opacity: 1; }
+
+    /* HISTORIAL */
     .history-btn {
         position: relative; cursor: pointer;
-        width: 34px; height: 34px; 
-        background: #eee; border: 2px solid transparent; border-radius: 4px;
+        width: 34px; height: 34px; background: #eee; border: 2px solid transparent; border-radius: 4px;
         display: flex; align-items: center; justify-content: center;
-        transition: transform 0.1s;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        transition: transform 0.1s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
     }
     .history-btn:hover { transform: scale(1.1); border-color: var(--twitch-color); z-index: 10; }
     
@@ -114,65 +103,35 @@
     }
     .thumb-pixel { width: 100%; height: 100%; }
 
-    /* BOTÓN BORRAR HISTORIAL (FIJO A LA DERECHA) */
     .clear-history-btn {
-        position: absolute; /* Fijo dentro del contenedor */
-        top: 15px; /* Mismo padding que el contenedor */
-        right: 15px; /* Pegado a la derecha */
-        
-        width: 34px; height: 34px; /* Mismo tamaño que los dibujos */
-        background: #dc3545; 
-        border: none; border-radius: 4px;
-        color: white; font-size: 16px; font-weight: bold; 
+        position: absolute; top: 15px; right: 15px; 
+        width: 34px; height: 34px; background: #dc3545; 
+        border: none; border-radius: 4px; color: white; font-size: 16px; font-weight: bold; 
         cursor: pointer; display: flex; align-items: center; justify-content: center;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        z-index: 50;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 50;
     }
     .clear-history-btn:active { transform: scale(0.95); }
 
-    /* Tooltip */
-    .palette-btn::after {
-      content: attr(data-name); position: absolute; bottom: 115%; left: 50%; transform: translateX(-50%);
-      background: #222; color: #fff; padding: 4px 8px; font-size: 11px; border-radius: 4px; font-weight: bold;
-      white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.2s; z-index: 20;
-    }
-    .palette-btn:hover::after { opacity: 1; }
+    /* WORKSPACE */
+    .workspace { display: flex; flex-direction: row; gap: 12px; align-items: flex-start; margin-top: 5px; }
 
-
-    /* 2. ZONA PRINCIPAL */
-    .workspace {
-      display: flex; flex-direction: row; gap: 12px; align-items: flex-start; margin-top: 5px;
-    }
-
-    .left-column {
-      display: flex; flex-direction: column; gap: 10px;
-      flex-grow: 1; width: 340px; 
-    }
+    .left-column { display: flex; flex-direction: column; gap: 10px; flex-grow: 1; width: 340px; }
 
     .grid-wrap {
       width: 100%; aspect-ratio: 1/1;
       border: 1px solid #999; background: white;
-      background-image: 
-        linear-gradient(45deg, #e6e6e6 25%, transparent 25%, transparent 75%, #e6e6e6 75%, #e6e6e6),
-        linear-gradient(45deg, #e6e6e6 25%, transparent 25%, transparent 75%, #e6e6e6 75%, #e6e6e6);
+      background-image: linear-gradient(45deg, #e6e6e6 25%, transparent 25%, transparent 75%, #e6e6e6 75%, #e6e6e6), linear-gradient(45deg, #e6e6e6 25%, transparent 25%, transparent 75%, #e6e6e6 75%, #e6e6e6);
       background-size: 20px 20px; background-position: 0 0, 10px 10px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-      cursor: crosshair; border-radius: 4px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1); cursor: crosshair; border-radius: 4px;
     }
 
-    #grid {
-      display: grid; grid-template-columns: repeat(16, 1fr); grid-template-rows: repeat(16, 1fr);
-      width: 100%; height: 100%;
-    }
-
+    #grid { display: grid; grid-template-columns: repeat(16, 1fr); grid-template-rows: repeat(16, 1fr); width: 100%; height: 100%; }
     .cell { border: 1px solid rgba(0,0,0,0.05); background-color: transparent; touch-action: none; }
 
     .right-column {
-      display: flex; flex-direction: column;
-      width: 45px; height: auto; align-self: stretch; 
+      display: flex; flex-direction: column; width: 45px; height: auto; align-self: stretch; 
       background: var(--panel-bg); border: 1px solid var(--border-color);
-      border-radius: 8px; padding: 5px; gap: 3px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      border-radius: 8px; padding: 5px; gap: 3px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     }
 
     .active-swatch {
@@ -180,22 +139,15 @@
       border: 2px solid transparent; transition: transform 0.1s; min-height: 12px; 
     }
     .active-swatch:hover { transform: scale(1.1); z-index: 10; }
-    .active-swatch.selected {
-      border-color: white; box-shadow: 0 0 0 2px var(--twitch-color);
-      transform: scale(1.15); z-index: 20;
-    }
+    .active-swatch.selected { border-color: white; box-shadow: 0 0 0 2px var(--twitch-color); transform: scale(1.15); z-index: 20; }
 
     .bg-transp { 
       background-color: #fff;
-      background-image: 
-        linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc),
-        linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc);
+      background-image: linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc), linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc);
       background-size: 8px 8px; background-position: 0 0, 4px 4px;
       position: relative; border: 1px solid #bbb;
     }
-    .bg-transp::after {
-      content: '×'; color: #ff4444; position: absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-weight:bold; font-size: 14px;
-    }
+    .bg-transp::after { content: '×'; color: #ff4444; position: absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-weight:bold; font-size: 14px; }
 
     .controls { display: flex; gap: 10px; }
     button {
@@ -203,8 +155,7 @@
       background: var(--twitch-color); color: white; font-weight: bold; font-size: 14px;
       cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.1s;
     }
-    button:active { transform: scale(0.96); }
-    button:hover { filter: brightness(1.1); }
+    button:active { transform: scale(0.96); } button:hover { filter: brightness(1.1); }
     
     #output {
       width: 100%; padding: 12px; box-sizing: border-box;
@@ -215,13 +166,10 @@
     }
     #output.copied { background: #28a745 !important; color: white !important; border-color: #1e7e34; }
 
-    /* --- RESPONSIVIDAD MÓVIL --- */
+    /* MÓVIL */
     @media (max-width: 600px) {
-      body {
-        height: 100vh; padding: 10px; padding-bottom: 20px; justify-content: flex-start;
-      }
-      .header-info { margin-bottom: 5px; } 
-      .header-info a { font-size: 22px; } 
+      body { height: 100vh; padding: 10px; padding-bottom: 20px; justify-content: flex-start; }
+      .header-info { margin-bottom: 5px; } .header-info a { font-size: 22px; } 
       .app-container { flex-grow: 1; height: 100%; gap: 8px; }
       .workspace { flex-direction: column; align-items: stretch; flex-grow: 1; gap: 10px; }
       .left-column { width: 100%; flex-grow: 0; gap: 8px; }
@@ -230,8 +178,7 @@
       #output { padding: 10px; font-size: 11px; }
 
       .right-column {
-        width: 100%; flex-direction: row;
-        height: 55px; flex-shrink: 0; padding: 4px; gap: 4px;
+        width: 100%; flex-direction: row; height: 55px; flex-shrink: 0; padding: 4px; gap: 4px;
         margin-bottom: 60px; /* Margen seguridad Android */
         margin-bottom: calc(60px + env(safe-area-inset-bottom));
         border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
@@ -248,34 +195,24 @@
   </div>
 
   <div class="app-container">
-    
     <div class="dropdown-group">
-        
         <div>
           <button class="toggle-btn" onclick="toggleAccordion('palettes')">
-            <span>🎨 CAMBIAR PALETA</span>
-            <span class="arrow-icon" id="arrow-palettes">▼</span>
+            <span>🎨 CAMBIAR PALETA</span><span class="arrow-icon" id="arrow-palettes">▼</span>
           </button>
           <div class="dropdown-content" id="palettesList" style="justify-content: center;"></div>
         </div>
-
         <div>
           <button class="toggle-btn" onclick="toggleAccordion('history')">
-            <span>💾 DIBUJOS CREADOS</span>
-            <span class="arrow-icon" id="arrow-history">▼</span>
+            <span>💾 DIBUJOS CREADOS</span><span class="arrow-icon" id="arrow-history">▼</span>
           </button>
-          
-          <div class="dropdown-content" id="historyList">
-             </div>
+          <div class="dropdown-content" id="historyList"></div>
         </div>
-
     </div>
 
     <div class="workspace">
       <div class="left-column">
-        <div class="grid-wrap">
-          <div id="grid"></div>
-        </div>
+        <div class="grid-wrap"><div id="grid"></div></div>
         <div class="controls">
           <button onclick="clearCanvas()" style="background:#dc3545">Borrar</button>
           <button onclick="generateCodeAndSave()">Generar</button>
@@ -284,11 +221,9 @@
       </div>
       <div class="right-column" id="activeColors"></div>
     </div>
-
   </div>
 
   <script>
-    // --- PALETAS ---
     const PALETTES = {
       standard: { name: "Estándar",   colors: ['#000000', '#aa0000','#00aa00','#aa5500','#0000aa','#aa00aa','#00aaaa','#aaaaaa','#555555','#ff5555','#55ff55','#ffff55','#5555ff','#ff55ff','#55ffff','#ffffff'] },
       pico8:    { name: "Pico-8",     colors: ['#000000', '#7E2553','#008751','#AB5236','#1D2B53','#5F574F','#83769C','#C2C3C7','#FFCCAA','#FF004D','#00E436','#FFEC27','#29ADFF','#FF77A8','#FFF1E8','#FFFFFF'] },
@@ -305,8 +240,7 @@
 
     let currentKey = 'pico8';
     let currentColors = ['transparent', ...PALETTES['pico8'].colors];
-    let selectedIdx = 1; 
-    let isDrawing = false;
+    let selectedIdx = 1; let isDrawing = false;
     
     const grid = document.getElementById('grid');
     const cells = [];
@@ -334,34 +268,27 @@
       cell.style.backgroundColor = (idx === 0) ? "" : currentColors[idx];
     }
 
-    // --- UI LOGIC ---
     function toggleAccordion(id) {
       const content = document.getElementById(id + 'List');
       const arrow = document.getElementById('arrow-' + id);
-      
       if (content.classList.contains('show')) {
-         content.classList.remove('show');
-         arrow.classList.remove('rotate-icon');
+         content.classList.remove('show'); arrow.classList.remove('rotate-icon');
       } else {
          document.querySelectorAll('.dropdown-content').forEach(el => el.classList.remove('show'));
          document.querySelectorAll('.arrow-icon').forEach(el => el.classList.remove('rotate-icon'));
-         content.classList.add('show');
-         arrow.classList.add('rotate-icon');
+         content.classList.add('show'); arrow.classList.add('rotate-icon');
          if(id === 'history') renderHistory();
       }
     }
 
     function renderPalettesBar() {
-      const container = document.getElementById('palettesList');
-      container.innerHTML = '';
+      const container = document.getElementById('palettesList'); container.innerHTML = '';
       for (const [key, data] of Object.entries(PALETTES)) {
         const btn = document.createElement('div');
         btn.className = 'palette-btn' + (key === currentKey ? ' selected' : '');
         btn.setAttribute('data-name', data.name);
         data.colors.forEach(c => {
-          const m = document.createElement('div');
-          m.className = 'mini-swatch'; m.style.backgroundColor = c;
-          btn.appendChild(m);
+          const m = document.createElement('div'); m.className = 'mini-swatch'; m.style.backgroundColor = c; btn.appendChild(m);
         });
         btn.onclick = () => { setPalette(key); };
         container.appendChild(btn);
@@ -369,8 +296,7 @@
     }
 
     function renderActiveColors() {
-      const container = document.getElementById('activeColors');
-      container.innerHTML = '';
+      const container = document.getElementById('activeColors'); container.innerHTML = '';
       for (let i = 1; i < currentColors.length; i++) { createSwatch(container, i); }
       createSwatch(container, 0);
     }
@@ -378,8 +304,7 @@
     function createSwatch(container, idx) {
       const el = document.createElement('div');
       el.className = 'active-swatch' + (idx === selectedIdx ? ' selected' : '');
-      if (idx === 0) el.classList.add('bg-transp');
-      else el.style.backgroundColor = currentColors[idx];
+      if (idx === 0) el.classList.add('bg-transp'); else el.style.backgroundColor = currentColors[idx];
       el.onclick = () => {
         document.querySelectorAll('.active-swatch').forEach(s => s.classList.remove('selected'));
         el.classList.add('selected'); selectedIdx = idx;
@@ -388,26 +313,19 @@
     }
 
     function setPalette(key) {
-      currentKey = key;
-      currentColors = ['transparent', ...PALETTES[key].colors];
-      renderPalettesBar();
-      renderActiveColors();
-      cells.forEach(c => updateVisual(c));
+      currentKey = key; currentColors = ['transparent', ...PALETTES[key].colors];
+      renderPalettesBar(); renderActiveColors(); cells.forEach(c => updateVisual(c));
     }
 
-    // --- HISTORIAL ---
     function saveDrawing() {
        const pixelData = cells.map(c => parseInt(c.dataset.idx));
-       if (pixelData.every(p => p === 0)) return; // No guardar vacíos
-
+       if (pixelData.every(p => p === 0)) return;
        const drawing = { data: pixelData, palette: currentKey, timestamp: Date.now() };
        let history = JSON.parse(localStorage.getItem('pixelArtHistory') || '[]');
-       
        if (history.length > 0) {
            const last = history[0];
            if (JSON.stringify(last.data) === JSON.stringify(drawing.data) && last.palette === drawing.palette) return;
        }
-
        history.unshift(drawing);
        if (history.length > 30) history.pop();
        localStorage.setItem('pixelArtHistory', JSON.stringify(history));
@@ -419,92 +337,80 @@
         const drawing = history[index];
         if (!drawing) return;
         setPalette(drawing.palette);
-        drawing.data.forEach((val, i) => {
-            cells[i].dataset.idx = val;
-            updateVisual(cells[i]);
-        });
+        drawing.data.forEach((val, i) => { cells[i].dataset.idx = val; updateVisual(cells[i]); });
         toggleAccordion('history');
     }
     
     function clearHistory() {
-        if(confirm("¿Estás seguro de borrar todos los dibujos guardados?")) {
-            localStorage.removeItem('pixelArtHistory');
-            renderHistory();
+        if(confirm("¿Borrar todos los dibujos guardados?")) {
+            localStorage.removeItem('pixelArtHistory'); renderHistory();
         }
     }
 
     function renderHistory() {
-        const container = document.getElementById('historyList');
-        container.innerHTML = '';
+        const container = document.getElementById('historyList'); container.innerHTML = '';
         const history = JSON.parse(localStorage.getItem('pixelArtHistory') || '[]');
-
-        if (history.length === 0) {
-            container.innerHTML = '<div style="font-size:12px; opacity:0.6; padding:10px;">No hay dibujos guardados</div>';
-            return;
-        }
-
-        // Renderizar Dibujos
+        if (history.length === 0) { container.innerHTML = '<div style="font-size:12px; opacity:0.6; padding:10px;">No hay dibujos guardados</div>'; return; }
         history.forEach((draw, index) => {
-            const btn = document.createElement('div');
-            btn.className = 'history-btn';
+            const btn = document.createElement('div'); btn.className = 'history-btn';
             btn.onclick = () => loadDrawing(index);
-
-            const gridPreview = document.createElement('div');
-            gridPreview.className = 'thumb-grid';
+            const gridPreview = document.createElement('div'); gridPreview.className = 'thumb-grid';
             const pal = ['transparent', ...PALETTES[draw.palette].colors];
-
             draw.data.forEach(idx => {
-                const p = document.createElement('div');
-                p.className = 'thumb-pixel';
+                const p = document.createElement('div'); p.className = 'thumb-pixel';
                 if(idx !== 0) p.style.backgroundColor = pal[idx];
                 gridPreview.appendChild(p);
             });
-
-            btn.appendChild(gridPreview);
-            container.appendChild(btn);
+            btn.appendChild(gridPreview); container.appendChild(btn);
         });
-        
-        // Renderizar Botón Borrar (ABSOLUTO A LA DERECHA)
         const clearBtn = document.createElement('button');
-        clearBtn.className = 'clear-history-btn';
-        clearBtn.innerHTML = "✖"; // Icono de borrar
-        clearBtn.title = "Borrar todo el historial";
-        clearBtn.onclick = clearHistory;
-        container.appendChild(clearBtn);
+        clearBtn.className = 'clear-history-btn'; clearBtn.innerHTML = "✖"; clearBtn.title = "Borrar todo el historial";
+        clearBtn.onclick = clearHistory; container.appendChild(clearBtn);
     }
 
-    // --- GENERAR ---
     function generateCodeAndSave() {
       saveDrawing();
       const pixelData = cells.map(c => parseInt(c.dataset.idx));
       const uniqueIndices = [...new Set(pixelData)].filter(i => i !== 0).sort((a,b) => a-b);
       if (uniqueIndices.length > 16) { alert("Error: Colores muy complejos."); return; }
+      
       const header = uniqueIndices.map(idx => currentColors[idx].replace('#','')).join('');
-      let bin = "";
+      let binString = "";
       for (let i = 0; i < pixelData.length; i += 2) {
-        const i1 = pixelData[i], i2 = pixelData[i+1] || 0;
+        const i1 = pixelData[i];
+        const i2 = (i + 1 < pixelData.length) ? pixelData[i+1] : 0;
         const p1 = (i1 === 0) ? 0 : (uniqueIndices.indexOf(i1) + 1);
         const p2 = (i2 === 0) ? 0 : (uniqueIndices.indexOf(i2) + 1);
-        bin += String.fromCharCode((p1 << 4) | p2);
+        binString += String.fromCharCode((p1 << 4) | p2);
       }
-      document.getElementById('output').value = "!dibujar v2" + header + "_" + btoa(bin);
+      
+      // OPTIMIZACIÓN: Recortar ceros finales
+      let lastIndex = binString.length;
+      while (lastIndex > 0 && binString.charCodeAt(lastIndex - 1) === 0) { lastIndex--; }
+      binString = binString.substring(0, lastIndex);
+      if (binString.length === 0) binString = String.fromCharCode(0);
+
+      document.getElementById('output').value = "!dibujar v2" + header + "_" + btoa(binString);
     }
 
-    function clearCanvas() {
-      if(confirm("¿Borrar?")) { cells.forEach(c => { c.dataset.idx="0"; updateVisual(c); }); document.getElementById('output').value=""; }
-    }
+    function clearCanvas() { if(confirm("¿Borrar?")) { cells.forEach(c => { c.dataset.idx="0"; updateVisual(c); }); document.getElementById('output').value=""; } }
 
     async function copyToClipboard() {
       const out = document.getElementById('output');
-      if(!out.value) return;
-      try { await navigator.clipboard.writeText(out.value); out.classList.add('copied'); setTimeout(()=>out.classList.remove('copied'), 1000); }
-      catch(e) { out.select(); document.execCommand("copy"); }
+      const originalText = out.value;
+      if(!originalText || originalText.includes("¡COPIADO!")) return;
+      try {
+        await navigator.clipboard.writeText(originalText);
+        out.value = "¡COPIADO!"; out.classList.add('copied');
+        setTimeout(() => { out.value = originalText; out.classList.remove('copied'); }, 1200);
+      } catch(e) {
+        out.select(); document.execCommand("copy");
+        out.value = "¡COPIADO!";
+        setTimeout(() => { out.value = originalText; }, 1200);
+      }
     }
 
-    // Inicio
-    renderPalettesBar();
-    renderActiveColors();
-    renderHistory();
+    renderPalettesBar(); renderActiveColors(); renderHistory();
   </script>
 </body>
 </html>
