@@ -41,6 +41,19 @@
       image-rendering: pixelated; 
       width: 150px; height: 150px; 
       background: transparent; 
+      /* Transición suave para cuando deje de saltar */
+      transition: transform 0.3s; 
+    }
+
+    /* --- ANIMACIÓN DE SALTO (NUEVOS NO-SUBS) --- */
+    @keyframes jumpBounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-30px); } /* Altura del salto */
+    }
+
+    /* Clase que se agrega temporalmente a los nuevos */
+    .jumping canvas {
+      animation: jumpBounce 0.8s ease-in-out infinite;
     }
 
     /* GLOW PARA EL DIBUJO DE SUBS */
@@ -205,7 +218,6 @@
       const statusEl = document.getElementById('status');
       statusEl.style.display = 'block';
       
-      // --- CAMBIO AQUÍ: TEXTO DINÁMICO ---
       statusEl.innerText = "CONECTANDO A " + CHANNEL.toUpperCase() + "...";
       statusEl.style.color = "#ffcc00";
 
@@ -362,8 +374,22 @@
            }
         }
 
-        if (isSub) itemEl.classList.add('is-sub');
-        if (isSub && !isTest) itemEl.classList.add('waiting');
+        // --- LÓGICA DE ESTADOS Y ANIMACIONES ---
+        if (isSub) {
+            // Es Sub: Animación Glow y va a la cola de espera
+            itemEl.classList.add('is-sub');
+            if (!isTest) itemEl.classList.add('waiting');
+        } else {
+            // NO es Sub: Animación de SALTO de bienvenida
+            if (!isTest) {
+                itemEl.classList.add('jumping');
+                // Quitar la clase después de 10 segundos
+                setTimeout(() => {
+                    if (itemEl) itemEl.classList.remove('jumping');
+                }, 16000);
+            }
+        }
+
         if (testMode && !isTest) itemEl.classList.add('hidden');
 
         itemEl.appendChild(canvas);
