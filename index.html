@@ -198,7 +198,10 @@
       .app-container { flex-grow: 1; height: 100%; gap: 8px; }
       .workspace { flex-direction: column; align-items: stretch; flex-grow: 1; gap: 10px; }
       .left-column { width: 100%; flex-grow: 0; gap: 8px; }
-      .grid-wrap { width: 100%; max-width: none; }
+      
+      /* CAMBIO AQUÍ: Reducción del canvas (14% menos aprox) para subir la UI */
+      .grid-wrap { width: 86%; margin: 0 auto; max-width: none; }
+      
       button, .toggle-btn, #output { padding: 10px; font-size: 14px; }
       #output { padding: 10px; font-size: 11px; }
 
@@ -448,7 +451,7 @@
       }
     }
 
-    // --- FUNCIÓN SHIFT CON EFECTO PAC-MAN (CÍCLICO) ---
+    // --- FUNCIÓN SHIFT CÍCLICA ---
     function shiftDrawing(direction) {
       const currentData = cells.map(c => parseInt(c.dataset.idx));
       const newData = new Array(256).fill(0);
@@ -456,24 +459,19 @@
 
       for (let y = 0; y < size; y++) {
         for (let x = 0; x < size; x++) {
-          
           let srcX = x;
           let srcY = y;
 
           if (direction === 'up') {
-             // Si muevo arriba, relleno con el de abajo (y+1). Módulo para dar vuelta
              srcY = (y + 1) % size;
           } 
           else if (direction === 'down') {
-             // Si muevo abajo, relleno con el de arriba. (+size) para evitar negativos
              srcY = (y - 1 + size) % size;
           } 
           else if (direction === 'left') {
-             // Si muevo izquierda, relleno con el de la derecha
              srcX = (x + 1) % size;
           } 
           else if (direction === 'right') {
-             // Si muevo derecha, relleno con el de la izquierda
              srcX = (x - 1 + size) % size;
           }
 
