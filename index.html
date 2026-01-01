@@ -166,6 +166,31 @@
     }
     #output.copied { background: #28a745 !important; color: white !important; border-color: #1e7e34; }
 
+    /* --- ESTILOS DE LA CRUCETA (D-PAD) --- */
+    .dpad {
+      display: grid;
+      grid-template-columns: 24px 24px 24px;
+      grid-template-rows: 20px 20px 20px; /* Compacto */
+      gap: 2px;
+      align-items: center; justify-items: center;
+      margin-left: 5px; /* Separación de los botones grandes */
+    }
+    
+    .dpad-btn {
+      padding: 0 !important; margin: 0;
+      width: 100%; height: 100%;
+      font-size: 10px; line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+      background: #444; /* Color oscuro para diferenciar */
+      box-shadow: 0 2px 2px rgba(0,0,0,0.2);
+    }
+    
+    /* Posicionamiento en la rejilla */
+    .btn-up    { grid-column: 2; grid-row: 1; border-top-left-radius: 4px; border-top-right-radius: 4px; }
+    .btn-left  { grid-column: 1; grid-row: 2; border-top-left-radius: 4px; border-bottom-left-radius: 4px; }
+    .btn-right { grid-column: 3; grid-row: 2; border-top-right-radius: 4px; border-bottom-right-radius: 4px; }
+    .btn-down  { grid-column: 2; grid-row: 3; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; }
+
     /* MÓVIL */
     @media (max-width: 600px) {
       body { height: 100vh; padding: 10px; padding-bottom: 20px; justify-content: flex-start; }
@@ -184,6 +209,10 @@
         border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
       }
       .active-swatch { min-height: 100%; min-width: 0; }
+      
+      /* Ajuste cruceta en móvil */
+      .controls { align-items: center; }
+      .dpad { grid-template-columns: 28px 28px 28px; grid-template-rows: 24px 24px 24px; }
     }
   </style>
 </head>
@@ -213,10 +242,20 @@
     <div class="workspace">
       <div class="left-column">
         <div class="grid-wrap"><div id="grid"></div></div>
+        
         <div class="controls">
           <button onclick="clearCanvas()" style="background:#dc3545">Borrar</button>
           <button onclick="generateCodeAndSave()">Generar</button>
+          
+          <div class="dpad">
+            <button class="dpad-btn btn-up" onclick="shiftDrawing('up')">▲</button>
+            <button class="dpad-btn btn-left" onclick="shiftDrawing('left')">◀</button>
+            <div style="width:4px; height:4px; background:#ccc; border-radius:50%; opacity:0.5;"></div> 
+            <button class="dpad-btn btn-right" onclick="shiftDrawing('right')">▶</button>
+            <button class="dpad-btn btn-down" onclick="shiftDrawing('down')">▼</button>
+          </div>
         </div>
+
         <input type="text" id="output" readonly onclick="copyToClipboard()" placeholder="Toca Generar para copiar">
       </div>
       <div class="right-column" id="activeColors"></div>
@@ -384,7 +423,6 @@
         binString += String.fromCharCode((p1 << 4) | p2);
       }
       
-      // OPTIMIZACIÓN: Recortar ceros finales
       let lastIndex = binString.length;
       while (lastIndex > 0 && binString.charCodeAt(lastIndex - 1) === 0) { lastIndex--; }
       binString = binString.substring(0, lastIndex);
@@ -408,6 +446,45 @@
         out.value = "¡COPIADO!";
         setTimeout(() => { out.value = originalText; }, 1200);
       }
+    }
+
+    // --- FUNCIÓN SHIFT CON EFECTO PAC-MAN (CÍCLICO) ---
+    function shiftDrawing(direction) {
+      const currentData = cells.map(c => parseInt(c.dataset.idx));
+      const newData = new Array(256).fill(0);
+      const size = 16;
+
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          
+          let srcX = x;
+          let srcY = y;
+
+          if (direction === 'up') {
+             // Si muevo arriba, relleno con el de abajo (y+1). Módulo para dar vuelta
+             srcY = (y + 1) % size;
+          } 
+          else if (direction === 'down') {
+             // Si muevo abajo, relleno con el de arriba. (+size) para evitar negativos
+             srcY = (y - 1 + size) % size;
+          } 
+          else if (direction === 'left') {
+             // Si muevo izquierda, relleno con el de la derecha
+             srcX = (x + 1) % size;
+          } 
+          else if (direction === 'right') {
+             // Si muevo derecha, relleno con el de la izquierda
+             srcX = (x - 1 + size) % size;
+          }
+
+          newData[(y * size) + x] = currentData[(srcY * size) + srcX];
+        }
+      }
+
+      newData.forEach((val, i) => {
+        cells[i].dataset.idx = val;
+        updateVisual(cells[i]);
+      });
     }
 
     renderPalettesBar(); renderActiveColors(); renderHistory();
