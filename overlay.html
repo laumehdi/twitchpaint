@@ -7,7 +7,10 @@
     html, body { 
       margin: 0; padding: 0; background: transparent !important; 
       overflow: hidden; width: 1920px; height: 1080px;
-      font-family: 'Segoe UI', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+      /* CORRECCIÓN AQUÍ: Se movieron las fuentes de texto estándar ANTES que las fuentes emoji.
+         Esto asegura que los números y letras usen la fuente normal blanca, 
+         y solo los símbolos (como ⭐) usen las fuentes de color. */
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Segoe UI Emoji', 'Noto Color Emoji';
     }
     
     #container { 
@@ -118,11 +121,10 @@
 
   <script>
     // --- CONFIGURACIÓN ---
-    const CHANNEL = 'laumehdi'; 
-    const LIFE_TIME_MINUTES = 50; 
+    const CHANNEL = 'mksh'; 
+    // SE ELIMINÓ EL LIFE_TIME_MINUTES PARA QUE LOS DIBUJOS SEAN ETERNOS
     // ---------------------
 
-    const LIFE_TIME_MS = LIFE_TIME_MINUTES * 60 * 1000;
     const colors = ['transparent','#000000','#aa0000','#00aa00','#aa5500','#0000aa','#aa00aa','#00aaaa','#aaaaaa','#555555','#ff5555','#55ff55','#ffff55','#5555ff','#ff55ff','#55ffff','#ffffff'];
     
     let drawings = []; 
@@ -175,11 +177,8 @@
         }
         // ============================
 
-        // --- MUERTE NATURAL (50 min) ---
-        if (!d.dying && !testMode && (now - d.createdAt > LIFE_TIME_MS)) {
-            d.dying = true;
-            d.vy = 0; d.rot = 0;
-        }
+        // --- SE ELIMINÓ EL BLOQUE DE MUERTE NATURAL ---
+        // Los dibujos ya no mueren por tiempo.
 
         if (d.dying) {
             d.vy += 0.5; 
