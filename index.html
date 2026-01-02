@@ -199,8 +199,7 @@
       .workspace { flex-direction: column; align-items: stretch; flex-grow: 1; gap: 10px; }
       .left-column { width: 100%; flex-grow: 0; gap: 8px; }
       
-      /* CAMBIO AQUÍ: Reducción del canvas (14% menos aprox) para subir la UI */
-      .grid-wrap { width: 86%; margin: 0 auto; max-width: none; }
+      .grid-wrap { width: 76%; margin: 0 auto; max-width: none; }
       
       button, .toggle-btn, #output { padding: 10px; font-size: 14px; }
       #output { padding: 10px; font-size: 11px; }
@@ -213,7 +212,6 @@
       }
       .active-swatch { min-height: 100%; min-width: 0; }
       
-      /* Ajuste cruceta en móvil */
       .controls { align-items: center; }
       .dpad { grid-template-columns: 28px 28px 28px; grid-template-rows: 24px 24px 24px; }
     }
@@ -248,6 +246,7 @@
         
         <div class="controls">
           <button onclick="clearCanvas()" style="background:#dc3545">Borrar</button>
+          <button onclick="pasteFromClipboard()" style="background:#0dcaf0; color: #000;">Pegar</button>
           <button onclick="generateCodeAndSave()">Generar</button>
           
           <div class="dpad">
@@ -434,6 +433,106 @@
       document.getElementById('output').value = "!dibujar v2" + header + "_" + btoa(binString);
     }
 
+    // --- FUNCIÓN PEGAR MEJORADA (FILTRO ROBUSTO + PALETA) ---
+    async function pasteFromClipboard() {
+      let text = "";
+      try {
+        text = await navigator.clipboard.readText();
+      } catch (err) {
+        text = prompt("El navegador bloqueó el portapapeles. Pega el código aquí manualmente:");
+      }
+
+      if (!text) return;
+
+      // --- FILTRADO INTELIGENTE DEL CÓDIGO ---
+      let code = text.trim();
+      
+      // Buscamos donde empieza "v2" y cortamos todo lo anterior (ignorando errores de tipeo o nombres)
+      const v2Index = code.indexOf('v2');
+      if (v2Index !== -1) {
+          code = code.substring(v2Index);
+      } else {
+          alert("No se encontró un código válido (debe contener 'v2')");
+          return;
+      }
+
+      // Verificamos formato básico
+      if (!code.includes('_')) { 
+          alert("El código parece estar incompleto o cortado."); 
+          return; 
+      }
+
+      const cleanCode = code; // Ya está limpio
+      const parts = cleanCode.substring(2).split('_'); // Quitamos "v2" y separamos
+      const headerHex = parts[0];
+      const payload = parts[1];
+      
+      if (!headerHex || !payload) return;
+
+      try {
+          // 1. OBTENER COLORES DEL CÓDIGO
+          const importedColors = ['transparent'];
+          for (let i = 0; i < headerHex.length; i += 6) {
+            importedColors.push('#' + headerHex.substring(i, i+6).toLowerCase());
+          }
+
+          // 2. DETECCIÓN INTELIGENTE DE PALETA
+          let bestMatchKey = null;
+          for (const [key, data] of Object.entries(PALETTES)) {
+              const paletteColors = ['transparent', ...data.colors];
+              const isMatch = importedColors.every(impColor => 
+                  paletteColors.some(sysColor => sysColor.toLowerCase() === impColor.toLowerCase())
+              );
+              if (isMatch) {
+                  bestMatchKey = key;
+                  break; 
+              }
+          }
+
+          if (bestMatchKey) {
+              setPalette(bestMatchKey);
+          } else {
+              currentColors = [...importedColors];
+              while (currentColors.length < 17) {
+                   currentColors.push('#000000'); 
+              }
+              currentKey = 'custom';
+              renderActiveColors();
+              document.querySelectorAll('.palette-btn').forEach(b => b.classList.remove('selected'));
+          }
+
+          // 3. DECODIFICAR Y PINTAR
+          const binaryString = atob(payload);
+          const pixelIndices = [];
+          for (let i = 0; i < binaryString.length; i++) {
+            const byte = binaryString.charCodeAt(i);
+            pixelIndices.push((byte >> 4) & 0x0F);
+            pixelIndices.push(byte & 0x0F);
+          }
+
+          cells.forEach((cell, i) => {
+            if (i < pixelIndices.length) {
+              const impIdx = pixelIndices[i];
+              if (impIdx === 0) {
+                 cell.dataset.idx = "0";
+              } else {
+                 const colorHex = importedColors[impIdx];
+                 const targetIdx = currentColors.findIndex(c => c.toLowerCase() === colorHex.toLowerCase());
+                 cell.dataset.idx = targetIdx > -1 ? targetIdx.toString() : "0";
+              }
+            } else {
+              cell.dataset.idx = "0";
+            }
+            updateVisual(cell);
+          });
+          
+          document.getElementById('output').value = "¡Importado correctamente!";
+      } catch (err) {
+          console.error("Error al procesar:", err);
+          alert("El código parece estar corrupto.");
+      }
+    }
+
     function clearCanvas() { if(confirm("¿Borrar?")) { cells.forEach(c => { c.dataset.idx="0"; updateVisual(c); }); document.getElementById('output').value=""; } }
 
     async function copyToClipboard() {
@@ -462,18 +561,10 @@
           let srcX = x;
           let srcY = y;
 
-          if (direction === 'up') {
-             srcY = (y + 1) % size;
-          } 
-          else if (direction === 'down') {
-             srcY = (y - 1 + size) % size;
-          } 
-          else if (direction === 'left') {
-             srcX = (x + 1) % size;
-          } 
-          else if (direction === 'right') {
-             srcX = (x - 1 + size) % size;
-          }
+          if (direction === 'up') { srcY = (y + 1) % size; } 
+          else if (direction === 'down') { srcY = (y - 1 + size) % size; } 
+          else if (direction === 'left') { srcX = (x + 1) % size; } 
+          else if (direction === 'right') { srcX = (x - 1 + size) % size; }
 
           newData[(y * size) + x] = currentData[(srcY * size) + srcX];
         }
