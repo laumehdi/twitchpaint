@@ -131,9 +131,9 @@
     /* COLUMNA DERECHA PRINCIPAL (DESKTOP) */
     .right-column {
       display: flex; flex-direction: column; 
-      width: 45px;             
-      min-width: 45px;         
-      max-width: 45px;         
+      width: 45px;              
+      min-width: 45px;          
+      max-width: 45px;          
       align-self: flex-start; 
       gap: 10px; 
     }
@@ -145,7 +145,7 @@
       border-radius: 8px; 
       box-shadow: 0 4px 10px rgba(0,0,0,0.05);
       padding: 5px; 
-      width: 100%;             
+      width: 100%;              
       box-sizing: border-box;  
       display: flex;
     }
@@ -154,7 +154,7 @@
       flex-direction: row; 
       justify-content: space-between;
       gap: 3px;          
-      height: 35px;     
+      height: 35px;      
     }
 
     /* DESKTOP: Columna vertical */
@@ -170,7 +170,7 @@
       font-size: 16px; font-weight: bold; line-height: 1;
       display: flex; align-items: center; justify-content: center;
       border: none; cursor: pointer; transition: background 0.2s;
-      min-width: 0; padding: 0; overflow: hidden;   
+      min-width: 0; padding: 0; overflow: hidden;    
     }
     .zoom-btn:hover { background: #333; }
     .zoom-btn:active { transform: scale(0.9); }
@@ -375,11 +375,7 @@
     }
     window.onmouseup = () => isDrawing = false;
     
-    document.addEventListener('paste', function(e) {
-        e.preventDefault();
-        const text = (e.clipboardData || window.clipboardData).getData('text');
-        if (text) processImportCode(text);
-    });
+    // Se elimina el listener global de paste para que no interfiera con el prompt
     
     function handleTouch(e) {
       const touch = e.touches[0];
@@ -589,13 +585,14 @@
         }
     }
 
-    async function pasteFromClipboard() {
-      try {
-        const text = await navigator.clipboard.readText();
+    // --- FUNCIÓN ARREGLADA ---
+    function pasteFromClipboard() {
+      // Abre ventana nativa para pedir el código
+      const text = prompt("Pega aquí el código del dibujo:");
+      
+      // Si el usuario ingresa datos, se procesan
+      if (text) {
         processImportCode(text);
-      } catch (err) {
-        console.warn("Error clipboard:", err);
-        showStatusMessage("⚠ Usa CTRL + V", true); 
       }
     }
 
