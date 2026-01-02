@@ -128,7 +128,7 @@
     #grid { display: grid; grid-template-columns: repeat(16, 1fr); grid-template-rows: repeat(16, 1fr); width: 100%; height: 100%; }
     .cell { border: 1px solid rgba(0,0,0,0.05); background-color: transparent; touch-action: none; }
 
-    /* COLUMNA DERECHA PRINCIPAL */
+    /* COLUMNA DERECHA PRINCIPAL (DESKTOP) */
     .right-column {
       display: flex; flex-direction: column; 
       width: 45px;             
@@ -157,11 +157,11 @@
       height: 35px;     
     }
 
+    /* DESKTOP: Columna vertical */
     .colors-panel {
       flex-direction: column; 
       gap: 3px; 
-      /* DESKTOP: Altura automática */
-      height: auto;
+      height: auto; 
     }
 
     .zoom-btn {
@@ -179,7 +179,7 @@
       width: 100%; 
       border-radius: 4px; cursor: pointer;
       border: 2px solid transparent; transition: transform 0.1s; 
-      /* DESKTOP: Altura fija para no colapsar con zoom out */
+      /* DESKTOP: Altura fija */
       height: 22px; 
       flex-shrink: 0;
     }
@@ -229,7 +229,7 @@
     .btn-right { grid-column: 3; grid-row: 2; border-top-right-radius: 4px; border-bottom-right-radius: 4px; }
     .btn-down  { grid-column: 2; grid-row: 3; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; }
 
-    /* MÓVIL */
+    /* MÓVIL (Correcciones finales) */
     @media (max-width: 600px) {
       body { height: 100vh; padding: 10px; padding-bottom: 20px; justify-content: flex-start; }
       .header-info { margin-bottom: 5px; } .header-info a { font-size: 22px; } 
@@ -253,10 +253,22 @@
       
       .zoom-panel { width: 60px; height: 100%; flex-direction: row; gap: 4px; } 
       
-      /* CORRECCIÓN VISUAL: Forzamos altura 100% en móvil para que no colapse */
-      .colors-panel { width: 100%; flex-direction: row; height: 100% !important; }
+      /* --- CORRECCIÓN CLAVE PARA MÓVIL --- */
+      .colors-panel { 
+          width: auto !important; /* Reseteamos el 100% que rompe el layout */
+          flex: 1;                /* Ocupa el espacio restante */
+          flex-direction: row; 
+          height: 100% !important; 
+      }
       
-      .active-swatch { height: 100%; min-width: 0; } 
+      .active-swatch { 
+          height: 100%; 
+          width: auto; 
+          flex: 1; /* Se reparten el ancho equitativamente */
+          min-width: 0; 
+      } 
+      /* ----------------------------------- */
+
       .controls { align-items: center; }
       .dpad { grid-template-columns: 28px 28px 28px; grid-template-rows: 24px 24px 24px; }
     }
@@ -307,12 +319,10 @@
       </div>
 
       <div class="right-column">
-        
         <div class="panel-box zoom-panel">
             <button class="zoom-btn" onclick="changeZoom(-0.1)" title="Alejar">-</button>
             <button class="zoom-btn" onclick="changeZoom(0.1)" title="Acercar">+</button>
         </div>
-
         <div class="panel-box colors-panel" id="activeColors"></div>
       </div>
     </div>
@@ -339,28 +349,20 @@
     
     // --- LÓGICA DE ZOOM ADAPTATIVA ---
     function getMaxZoom() {
-        // Si es móvil (ancho <= 600px), el máximo zoom es 85% (0.85)
-        // Si es escritorio, es 100% (1.0)
         return window.innerWidth <= 600 ? 0.85 : 1.0;
     }
 
-    let zoomLevel = getMaxZoom(); // Inicializamos con el valor correcto según dispositivo
-
-    // Aplicar tamaño inicial
+    let zoomLevel = getMaxZoom(); 
     const gridWrap = document.getElementById('gridWrap');
     gridWrap.style.width = (zoomLevel * 100) + "%";
 
     function changeZoom(delta) {
         const max = getMaxZoom();
         zoomLevel += delta;
-        
-        // Respetar límites
         if (zoomLevel > max) zoomLevel = max;
         if (zoomLevel < 0.2) zoomLevel = 0.2;
-        
         gridWrap.style.width = (zoomLevel * 100) + "%";
     }
-    // ---------------------------------
     
     const grid = document.getElementById('grid');
     const cells = [];
@@ -373,7 +375,6 @@
     }
     window.onmouseup = () => isDrawing = false;
     
-    // --- LISTENER GLOBAL PARA CTRL+V ---
     document.addEventListener('paste', function(e) {
         e.preventDefault();
         const text = (e.clipboardData || window.clipboardData).getData('text');
@@ -519,43 +520,26 @@
       document.getElementById('output').value = "!dibujar v2" + header + "_" + btoa(binString);
     }
 
-    // --- MANEJO DE MENSAJES TEMPORALES ---
     function showStatusMessage(msg, isError = false) {
         const out = document.getElementById('output');
         out.value = msg;
         out.style.color = isError ? '#dc3545' : '#28a745'; 
-        
-        setTimeout(() => {
-            if (out.value === msg) {
-                out.value = ""; 
-                out.style.color = "";
-            }
-        }, 1500);
+        setTimeout(() => { if (out.value === msg) { out.value = ""; out.style.color = ""; } }, 1500);
     }
 
-    // --- LÓGICA DE PROCESAMIENTO ---
     function processImportCode(code) {
         if (!code) return;
         code = code.trim();
-
         const v2Index = code.indexOf('v2');
-        if (v2Index !== -1) {
-            code = code.substring(v2Index);
-        } else {
-            showStatusMessage("⚠ Falta 'v2' en el código", true);
-            return;
-        }
+        if (v2Index !== -1) { code = code.substring(v2Index); } 
+        else { showStatusMessage("⚠ Falta 'v2' en el código", true); return; }
 
-        if (!code.includes('_')) { 
-            showStatusMessage("⚠ Código incompleto", true);
-            return; 
-        }
+        if (!code.includes('_')) { showStatusMessage("⚠ Código incompleto", true); return; }
 
         const cleanCode = code; 
         const parts = cleanCode.substring(2).split('_'); 
         const headerHex = parts[0];
         const payload = parts[1];
-        
         if (!headerHex || !payload) return;
 
         try {
@@ -563,31 +547,22 @@
             for (let i = 0; i < headerHex.length; i += 6) {
                 importedColors.push('#' + headerHex.substring(i, i+6).toLowerCase());
             }
-
             let bestMatchKey = null;
             for (const [key, data] of Object.entries(PALETTES)) {
                 const paletteColors = ['transparent', ...data.colors];
                 const isMatch = importedColors.every(impColor => 
                     paletteColors.some(sysColor => sysColor.toLowerCase() === impColor.toLowerCase())
                 );
-                if (isMatch) {
-                    bestMatchKey = key;
-                    break; 
-                }
+                if (isMatch) { bestMatchKey = key; break; }
             }
-
-            if (bestMatchKey) {
-                setPalette(bestMatchKey);
-            } else {
+            if (bestMatchKey) { setPalette(bestMatchKey); } 
+            else {
                 currentColors = [...importedColors];
-                while (currentColors.length < 17) {
-                    currentColors.push('#000000'); 
-                }
+                while (currentColors.length < 17) { currentColors.push('#000000'); }
                 currentKey = 'custom';
                 renderActiveColors();
                 document.querySelectorAll('.palette-btn').forEach(b => b.classList.remove('selected'));
             }
-
             const binaryString = atob(payload);
             const pixelIndices = [];
             for (let i = 0; i < binaryString.length; i++) {
@@ -595,32 +570,25 @@
                 pixelIndices.push((byte >> 4) & 0x0F);
                 pixelIndices.push(byte & 0x0F);
             }
-
             cells.forEach((cell, i) => {
                 if (i < pixelIndices.length) {
                 const impIdx = pixelIndices[i];
-                if (impIdx === 0) {
-                    cell.dataset.idx = "0";
-                } else {
+                if (impIdx === 0) { cell.dataset.idx = "0"; } 
+                else {
                     const colorHex = importedColors[impIdx];
                     const targetIdx = currentColors.findIndex(c => c.toLowerCase() === colorHex.toLowerCase());
                     cell.dataset.idx = targetIdx > -1 ? targetIdx.toString() : "0";
                 }
-                } else {
-                cell.dataset.idx = "0";
-                }
+                } else { cell.dataset.idx = "0"; }
                 updateVisual(cell);
             });
-            
             showStatusMessage("¡DIBUJO IMPORTADO!");
-
         } catch (err) {
             console.error("Error al procesar:", err);
             showStatusMessage("⚠ Código corrupto", true);
         }
     }
 
-    // --- FUNCIÓN BOTÓN PEGAR ---
     async function pasteFromClipboard() {
       try {
         const text = await navigator.clipboard.readText();
@@ -636,17 +604,12 @@
     async function copyToClipboard() {
       const out = document.getElementById('output');
       const textToCopy = out.value;
-
       if (!textToCopy || !textToCopy.startsWith('!dibujar')) return;
-
       try {
         await navigator.clipboard.writeText(textToCopy);
         out.classList.add('copied');
         out.value = "¡COPIADO!"; 
-        setTimeout(() => { 
-            out.value = textToCopy; 
-            out.classList.remove('copied'); 
-        }, 1200);
+        setTimeout(() => { out.value = textToCopy; out.classList.remove('copied'); }, 1200);
       } catch(e) {
         out.select(); document.execCommand("copy");
         out.value = "¡COPIADO!";
@@ -658,25 +621,18 @@
       const currentData = cells.map(c => parseInt(c.dataset.idx));
       const newData = new Array(256).fill(0);
       const size = 16;
-
       for (let y = 0; y < size; y++) {
         for (let x = 0; x < size; x++) {
           let srcX = x;
           let srcY = y;
-
           if (direction === 'up') { srcY = (y + 1) % size; } 
           else if (direction === 'down') { srcY = (y - 1 + size) % size; } 
           else if (direction === 'left') { srcX = (x + 1) % size; } 
           else if (direction === 'right') { srcX = (x - 1 + size) % size; }
-
           newData[(y * size) + x] = currentData[(srcY * size) + srcX];
         }
       }
-
-      newData.forEach((val, i) => {
-        cells[i].dataset.idx = val;
-        updateVisual(cells[i]);
-      });
+      newData.forEach((val, i) => { cells[i].dataset.idx = val; updateVisual(cells[i]); });
     }
 
     renderPalettesBar(); renderActiveColors(); renderHistory();
