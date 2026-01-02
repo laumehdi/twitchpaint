@@ -56,7 +56,7 @@
     
     .dropdown-content.show { 
         max-height: 500px; opacity: 1; 
-        padding: 15px 55px 15px 15px; /* Padding derecho extra para botón borrar */
+        padding: 15px 55px 15px 15px; 
         border-color: var(--border-color); overflow-y: auto; 
     }
     
@@ -79,7 +79,6 @@
     .mini-swatch:nth-child(9) { border-bottom-left-radius: 3px; }
     .mini-swatch:last-child { border-bottom-right-radius: 3px; }
 
-    /* TOOLTIP DEBAJO */
     .palette-btn::after {
       content: attr(data-name); position: absolute; top: 115%; left: 50%; transform: translateX(-50%);
       background: #222; color: #fff; padding: 4px 8px; font-size: 11px; border-radius: 4px; font-weight: bold;
@@ -123,20 +122,72 @@
       background-image: linear-gradient(45deg, #e6e6e6 25%, transparent 25%, transparent 75%, #e6e6e6 75%, #e6e6e6), linear-gradient(45deg, #e6e6e6 25%, transparent 25%, transparent 75%, #e6e6e6 75%, #e6e6e6);
       background-size: 20px 20px; background-position: 0 0, 10px 10px;
       box-shadow: 0 8px 20px rgba(0,0,0,0.1); cursor: crosshair; border-radius: 4px;
+      transition: width 0.2s ease; 
     }
 
     #grid { display: grid; grid-template-columns: repeat(16, 1fr); grid-template-rows: repeat(16, 1fr); width: 100%; height: 100%; }
     .cell { border: 1px solid rgba(0,0,0,0.05); background-color: transparent; touch-action: none; }
 
+    /* COLUMNA DERECHA PRINCIPAL */
+    /* Aquí forzamos el ancho exacto y la alineación */
     .right-column {
-      display: flex; flex-direction: column; width: 45px; height: auto; align-self: stretch; 
-      background: var(--panel-bg); border: 1px solid var(--border-color);
-      border-radius: 8px; padding: 5px; gap: 3px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      display: flex; flex-direction: column; 
+      width: 45px;             /* Ancho FIJO */
+      min-width: 45px;         /* Evita que se encoja */
+      max-width: 45px;         /* Evita que se expanda */
+      align-self: flex-start;  /* IMPORTANTE: Evita que se estire con el canvas */
+      gap: 10px; 
     }
 
+    /* PANELES INDIVIDUALES */
+    .panel-box {
+      background: var(--panel-bg); 
+      border: 1px solid var(--border-color);
+      border-radius: 8px; 
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      padding: 5px; 
+      width: 100%;             /* Ocupa exactamente los 45px del padre */
+      box-sizing: border-box;  /* Asegura que el padding no aumente el ancho */
+      display: flex;
+    }
+
+    .zoom-panel {
+      flex-direction: row; 
+      justify-content: space-between;
+      gap: 3px;          
+      height: 35px;     
+    }
+
+    .colors-panel {
+      flex-direction: column; 
+      gap: 3px; 
+      flex-grow: 1; 
+      height: auto;
+    }
+
+    .zoom-btn {
+      flex: 1; height: 100%;
+      background: #555; color: white; border-radius: 4px; 
+      font-size: 16px; font-weight: bold; line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+      border: none; cursor: pointer; transition: background 0.2s;
+      
+      /* CLAVE PARA CORREGIR EL ANCHO: */
+      min-width: 0;       /* Permite que flexbox encoja el botón si es necesario */
+      padding: 0;         /* Sin padding extra */
+      overflow: hidden;   /* Evita desbordes */
+    }
+    .zoom-btn:hover { background: #333; }
+    .zoom-btn:active { transform: scale(0.9); }
+
     .active-swatch {
-      flex: 1; width: 100%; border-radius: 4px; cursor: pointer;
-      border: 2px solid transparent; transition: transform 0.1s; min-height: 12px; 
+      width: 100%; 
+      border-radius: 4px; cursor: pointer;
+      border: 2px solid transparent; transition: transform 0.1s; 
+      
+      /* CLAVE: Altura FIJA para que no dependa del zoom del canvas */
+      height: 22px; 
+      flex-shrink: 0;
     }
     .active-swatch:hover { transform: scale(1.1); z-index: 10; }
     .active-swatch.selected { border-color: white; box-shadow: 0 0 0 2px var(--twitch-color); transform: scale(1.15); z-index: 20; }
@@ -166,26 +217,19 @@
     }
     #output.copied { background: #28a745 !important; color: white !important; border-color: #1e7e34; }
 
-    /* --- ESTILOS DE LA CRUCETA (D-PAD) --- */
+    /* D-PAD */
     .dpad {
       display: grid;
       grid-template-columns: 24px 24px 24px;
-      grid-template-rows: 20px 20px 20px; /* Compacto */
-      gap: 2px;
-      align-items: center; justify-items: center;
-      margin-left: 5px; /* Separación de los botones grandes */
+      grid-template-rows: 20px 20px 20px; 
+      gap: 2px; align-items: center; justify-items: center; margin-left: 5px; 
     }
-    
     .dpad-btn {
-      padding: 0 !important; margin: 0;
-      width: 100%; height: 100%;
+      padding: 0 !important; margin: 0; width: 100%; height: 100%;
       font-size: 10px; line-height: 1;
       display: flex; align-items: center; justify-content: center;
-      background: #444; /* Color oscuro para diferenciar */
-      box-shadow: 0 2px 2px rgba(0,0,0,0.2);
+      background: #444; box-shadow: 0 2px 2px rgba(0,0,0,0.2);
     }
-    
-    /* Posicionamiento en la rejilla */
     .btn-up    { grid-column: 2; grid-row: 1; border-top-left-radius: 4px; border-top-right-radius: 4px; }
     .btn-left  { grid-column: 1; grid-row: 2; border-top-left-radius: 4px; border-bottom-left-radius: 4px; }
     .btn-right { grid-column: 3; grid-row: 2; border-top-right-radius: 4px; border-bottom-right-radius: 4px; }
@@ -205,13 +249,19 @@
       #output { padding: 10px; font-size: 11px; }
 
       .right-column {
-        width: 100%; flex-direction: row; height: 55px; flex-shrink: 0; padding: 4px; gap: 4px;
-        margin-bottom: 60px; /* Margen seguridad Android */
+        width: 100%; max-width: 100%; /* Reseteo para móvil */
+        flex-direction: row; height: 55px; flex-shrink: 0; 
+        gap: 8px; align-self: center; margin-bottom: 60px;
         margin-bottom: calc(60px + env(safe-area-inset-bottom));
-        border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
       }
-      .active-swatch { min-height: 100%; min-width: 0; }
+
+      .panel-box { padding: 4px; height: 100%; box-sizing: border-box; }
       
+      .zoom-panel { width: 60px; height: 100%; flex-direction: row; gap: 4px; } 
+      .colors-panel { width: 100%; flex-direction: row; }
+      
+      /* En móvil sí queremos que llenen la altura */
+      .active-swatch { height: 100%; min-width: 0; } 
       .controls { align-items: center; }
       .dpad { grid-template-columns: 28px 28px 28px; grid-template-rows: 24px 24px 24px; }
     }
@@ -242,7 +292,7 @@
 
     <div class="workspace">
       <div class="left-column">
-        <div class="grid-wrap"><div id="grid"></div></div>
+        <div class="grid-wrap" id="gridWrap"><div id="grid"></div></div>
         
         <div class="controls">
           <button onclick="clearCanvas()" style="background:#dc3545">Borrar</button>
@@ -260,7 +310,16 @@
 
         <input type="text" id="output" readonly onclick="copyToClipboard()" placeholder="Genera y copia el código">
       </div>
-      <div class="right-column" id="activeColors"></div>
+
+      <div class="right-column">
+        
+        <div class="panel-box zoom-panel">
+            <button class="zoom-btn" onclick="changeZoom(-0.1)" title="Alejar">-</button>
+            <button class="zoom-btn" onclick="changeZoom(0.1)" title="Acercar">+</button>
+        </div>
+
+        <div class="panel-box colors-panel" id="activeColors"></div>
+      </div>
     </div>
   </div>
 
@@ -282,6 +341,18 @@
     let currentKey = 'pico8';
     let currentColors = ['transparent', ...PALETTES['pico8'].colors];
     let selectedIdx = 1; let isDrawing = false;
+    
+    // --- LÓGICA DE ZOOM ---
+    let zoomLevel = 1.0;
+    function changeZoom(delta) {
+        zoomLevel += delta;
+        // Max 1.0 (100%), Min 0.2 (20%)
+        if (zoomLevel > 1.0) zoomLevel = 1.0;
+        if (zoomLevel < 0.2) zoomLevel = 0.2;
+        
+        const gridWrap = document.getElementById('gridWrap');
+        gridWrap.style.width = (zoomLevel * 100) + "%";
+    }
     
     const grid = document.getElementById('grid');
     const cells = [];
@@ -433,50 +504,60 @@
       document.getElementById('output').value = "!dibujar v2" + header + "_" + btoa(binString);
     }
 
-    // --- FUNCIÓN PEGAR MEJORADA (FILTRO ROBUSTO + PALETA) ---
+    // --- MANEJO DE MENSAJES TEMPORALES ---
+    function showStatusMessage(msg, isError = false) {
+        const out = document.getElementById('output');
+        out.value = msg;
+        out.style.color = isError ? '#dc3545' : '#28a745'; 
+        
+        setTimeout(() => {
+            if (out.value === msg) {
+                out.value = ""; 
+                out.style.color = "";
+            }
+        }, 1500);
+    }
+
+    // --- FUNCIÓN PEGAR (SIN PROMPT) ---
     async function pasteFromClipboard() {
       let text = "";
       try {
         text = await navigator.clipboard.readText();
       } catch (err) {
-        text = prompt("El navegador bloqueó el portapapeles. Pega el código aquí manualmente:");
+        console.warn("Error clipboard:", err);
+        showStatusMessage("⚠ No se pudo leer el portapapeles", true);
+        return; 
       }
 
       if (!text) return;
 
-      // --- FILTRADO INTELIGENTE DEL CÓDIGO ---
       let code = text.trim();
-      
-      // Buscamos donde empieza "v2" y cortamos todo lo anterior (ignorando errores de tipeo o nombres)
       const v2Index = code.indexOf('v2');
       if (v2Index !== -1) {
           code = code.substring(v2Index);
       } else {
-          alert("No se encontró un código válido (debe contener 'v2')");
+          showStatusMessage("⚠ Falta 'v2' en el código", true);
           return;
       }
 
-      // Verificamos formato básico
       if (!code.includes('_')) { 
-          alert("El código parece estar incompleto o cortado."); 
+          showStatusMessage("⚠ Código incompleto", true);
           return; 
       }
 
-      const cleanCode = code; // Ya está limpio
-      const parts = cleanCode.substring(2).split('_'); // Quitamos "v2" y separamos
+      const cleanCode = code; 
+      const parts = cleanCode.substring(2).split('_'); 
       const headerHex = parts[0];
       const payload = parts[1];
       
       if (!headerHex || !payload) return;
 
       try {
-          // 1. OBTENER COLORES DEL CÓDIGO
           const importedColors = ['transparent'];
           for (let i = 0; i < headerHex.length; i += 6) {
             importedColors.push('#' + headerHex.substring(i, i+6).toLowerCase());
           }
 
-          // 2. DETECCIÓN INTELIGENTE DE PALETA
           let bestMatchKey = null;
           for (const [key, data] of Object.entries(PALETTES)) {
               const paletteColors = ['transparent', ...data.colors];
@@ -501,7 +582,6 @@
               document.querySelectorAll('.palette-btn').forEach(b => b.classList.remove('selected'));
           }
 
-          // 3. DECODIFICAR Y PINTAR
           const binaryString = atob(payload);
           const pixelIndices = [];
           for (let i = 0; i < binaryString.length; i++) {
@@ -526,10 +606,11 @@
             updateVisual(cell);
           });
           
-          document.getElementById('output').value = "¡Importado correctamente!";
+          showStatusMessage("¡DIBUJO IMPORTADO!");
+
       } catch (err) {
           console.error("Error al procesar:", err);
-          alert("El código parece estar corrupto.");
+          showStatusMessage("⚠ Código corrupto", true);
       }
     }
 
@@ -537,20 +618,25 @@
 
     async function copyToClipboard() {
       const out = document.getElementById('output');
-      const originalText = out.value;
-      if(!originalText || originalText.includes("¡COPIADO!")) return;
+      const textToCopy = out.value;
+
+      if (!textToCopy || !textToCopy.startsWith('!dibujar')) return;
+
       try {
-        await navigator.clipboard.writeText(originalText);
-        out.value = "¡COPIADO!"; out.classList.add('copied');
-        setTimeout(() => { out.value = originalText; out.classList.remove('copied'); }, 1200);
+        await navigator.clipboard.writeText(textToCopy);
+        out.classList.add('copied');
+        out.value = "¡COPIADO!"; 
+        setTimeout(() => { 
+            out.value = textToCopy; 
+            out.classList.remove('copied'); 
+        }, 1200);
       } catch(e) {
         out.select(); document.execCommand("copy");
         out.value = "¡COPIADO!";
-        setTimeout(() => { out.value = originalText; }, 1200);
+        setTimeout(() => { out.value = textToCopy; }, 1200);
       }
     }
 
-    // --- FUNCIÓN SHIFT CÍCLICA ---
     function shiftDrawing(direction) {
       const currentData = cells.map(c => parseInt(c.dataset.idx));
       const newData = new Array(256).fill(0);
