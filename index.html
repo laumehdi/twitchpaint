@@ -129,13 +129,12 @@
     .cell { border: 1px solid rgba(0,0,0,0.05); background-color: transparent; touch-action: none; }
 
     /* COLUMNA DERECHA PRINCIPAL */
-    /* Aquí forzamos el ancho exacto y la alineación */
     .right-column {
       display: flex; flex-direction: column; 
-      width: 45px;             /* Ancho FIJO */
-      min-width: 45px;         /* Evita que se encoja */
-      max-width: 45px;         /* Evita que se expanda */
-      align-self: flex-start;  /* IMPORTANTE: Evita que se estire con el canvas */
+      width: 45px;             
+      min-width: 45px;         
+      max-width: 45px;         
+      align-self: flex-start; 
       gap: 10px; 
     }
 
@@ -146,8 +145,8 @@
       border-radius: 8px; 
       box-shadow: 0 4px 10px rgba(0,0,0,0.05);
       padding: 5px; 
-      width: 100%;             /* Ocupa exactamente los 45px del padre */
-      box-sizing: border-box;  /* Asegura que el padding no aumente el ancho */
+      width: 100%;             
+      box-sizing: border-box;  
       display: flex;
     }
 
@@ -161,7 +160,7 @@
     .colors-panel {
       flex-direction: column; 
       gap: 3px; 
-      flex-grow: 1; 
+      /* DESKTOP: Altura automática */
       height: auto;
     }
 
@@ -171,11 +170,7 @@
       font-size: 16px; font-weight: bold; line-height: 1;
       display: flex; align-items: center; justify-content: center;
       border: none; cursor: pointer; transition: background 0.2s;
-      
-      /* CLAVE PARA CORREGIR EL ANCHO: */
-      min-width: 0;       /* Permite que flexbox encoja el botón si es necesario */
-      padding: 0;         /* Sin padding extra */
-      overflow: hidden;   /* Evita desbordes */
+      min-width: 0; padding: 0; overflow: hidden;   
     }
     .zoom-btn:hover { background: #333; }
     .zoom-btn:active { transform: scale(0.9); }
@@ -184,8 +179,7 @@
       width: 100%; 
       border-radius: 4px; cursor: pointer;
       border: 2px solid transparent; transition: transform 0.1s; 
-      
-      /* CLAVE: Altura FIJA para que no dependa del zoom del canvas */
+      /* DESKTOP: Altura fija para no colapsar con zoom out */
       height: 22px; 
       flex-shrink: 0;
     }
@@ -249,7 +243,7 @@
       #output { padding: 10px; font-size: 11px; }
 
       .right-column {
-        width: 100%; max-width: 100%; /* Reseteo para móvil */
+        width: 100%; max-width: 100%; 
         flex-direction: row; height: 55px; flex-shrink: 0; 
         gap: 8px; align-self: center; margin-bottom: 60px;
         margin-bottom: calc(60px + env(safe-area-inset-bottom));
@@ -258,9 +252,10 @@
       .panel-box { padding: 4px; height: 100%; box-sizing: border-box; }
       
       .zoom-panel { width: 60px; height: 100%; flex-direction: row; gap: 4px; } 
-      .colors-panel { width: 100%; flex-direction: row; }
       
-      /* En móvil sí queremos que llenen la altura */
+      /* CORRECCIÓN VISUAL: Forzamos altura 100% en móvil para que no colapse */
+      .colors-panel { width: 100%; flex-direction: row; height: 100% !important; }
+      
       .active-swatch { height: 100%; min-width: 0; } 
       .controls { align-items: center; }
       .dpad { grid-template-columns: 28px 28px 28px; grid-template-rows: 24px 24px 24px; }
@@ -342,17 +337,30 @@
     let currentColors = ['transparent', ...PALETTES['pico8'].colors];
     let selectedIdx = 1; let isDrawing = false;
     
-    // --- LÓGICA DE ZOOM ---
-    let zoomLevel = 1.0;
+    // --- LÓGICA DE ZOOM ADAPTATIVA ---
+    function getMaxZoom() {
+        // Si es móvil (ancho <= 600px), el máximo zoom es 85% (0.85)
+        // Si es escritorio, es 100% (1.0)
+        return window.innerWidth <= 600 ? 0.85 : 1.0;
+    }
+
+    let zoomLevel = getMaxZoom(); // Inicializamos con el valor correcto según dispositivo
+
+    // Aplicar tamaño inicial
+    const gridWrap = document.getElementById('gridWrap');
+    gridWrap.style.width = (zoomLevel * 100) + "%";
+
     function changeZoom(delta) {
+        const max = getMaxZoom();
         zoomLevel += delta;
-        // Max 1.0 (100%), Min 0.2 (20%)
-        if (zoomLevel > 1.0) zoomLevel = 1.0;
+        
+        // Respetar límites
+        if (zoomLevel > max) zoomLevel = max;
         if (zoomLevel < 0.2) zoomLevel = 0.2;
         
-        const gridWrap = document.getElementById('gridWrap');
         gridWrap.style.width = (zoomLevel * 100) + "%";
     }
+    // ---------------------------------
     
     const grid = document.getElementById('grid');
     const cells = [];
@@ -364,6 +372,13 @@
       grid.appendChild(cell); cells.push(cell);
     }
     window.onmouseup = () => isDrawing = false;
+    
+    // --- LISTENER GLOBAL PARA CTRL+V ---
+    document.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const text = (e.clipboardData || window.clipboardData).getData('text');
+        if (text) processImportCode(text);
+    });
     
     function handleTouch(e) {
       const touch = e.touches[0];
@@ -518,99 +533,101 @@
         }, 1500);
     }
 
-    // --- FUNCIÓN PEGAR (SIN PROMPT) ---
+    // --- LÓGICA DE PROCESAMIENTO ---
+    function processImportCode(code) {
+        if (!code) return;
+        code = code.trim();
+
+        const v2Index = code.indexOf('v2');
+        if (v2Index !== -1) {
+            code = code.substring(v2Index);
+        } else {
+            showStatusMessage("⚠ Falta 'v2' en el código", true);
+            return;
+        }
+
+        if (!code.includes('_')) { 
+            showStatusMessage("⚠ Código incompleto", true);
+            return; 
+        }
+
+        const cleanCode = code; 
+        const parts = cleanCode.substring(2).split('_'); 
+        const headerHex = parts[0];
+        const payload = parts[1];
+        
+        if (!headerHex || !payload) return;
+
+        try {
+            const importedColors = ['transparent'];
+            for (let i = 0; i < headerHex.length; i += 6) {
+                importedColors.push('#' + headerHex.substring(i, i+6).toLowerCase());
+            }
+
+            let bestMatchKey = null;
+            for (const [key, data] of Object.entries(PALETTES)) {
+                const paletteColors = ['transparent', ...data.colors];
+                const isMatch = importedColors.every(impColor => 
+                    paletteColors.some(sysColor => sysColor.toLowerCase() === impColor.toLowerCase())
+                );
+                if (isMatch) {
+                    bestMatchKey = key;
+                    break; 
+                }
+            }
+
+            if (bestMatchKey) {
+                setPalette(bestMatchKey);
+            } else {
+                currentColors = [...importedColors];
+                while (currentColors.length < 17) {
+                    currentColors.push('#000000'); 
+                }
+                currentKey = 'custom';
+                renderActiveColors();
+                document.querySelectorAll('.palette-btn').forEach(b => b.classList.remove('selected'));
+            }
+
+            const binaryString = atob(payload);
+            const pixelIndices = [];
+            for (let i = 0; i < binaryString.length; i++) {
+                const byte = binaryString.charCodeAt(i);
+                pixelIndices.push((byte >> 4) & 0x0F);
+                pixelIndices.push(byte & 0x0F);
+            }
+
+            cells.forEach((cell, i) => {
+                if (i < pixelIndices.length) {
+                const impIdx = pixelIndices[i];
+                if (impIdx === 0) {
+                    cell.dataset.idx = "0";
+                } else {
+                    const colorHex = importedColors[impIdx];
+                    const targetIdx = currentColors.findIndex(c => c.toLowerCase() === colorHex.toLowerCase());
+                    cell.dataset.idx = targetIdx > -1 ? targetIdx.toString() : "0";
+                }
+                } else {
+                cell.dataset.idx = "0";
+                }
+                updateVisual(cell);
+            });
+            
+            showStatusMessage("¡DIBUJO IMPORTADO!");
+
+        } catch (err) {
+            console.error("Error al procesar:", err);
+            showStatusMessage("⚠ Código corrupto", true);
+        }
+    }
+
+    // --- FUNCIÓN BOTÓN PEGAR ---
     async function pasteFromClipboard() {
-      let text = "";
       try {
-        text = await navigator.clipboard.readText();
+        const text = await navigator.clipboard.readText();
+        processImportCode(text);
       } catch (err) {
         console.warn("Error clipboard:", err);
-        showStatusMessage("⚠ No se pudo leer el portapapeles", true);
-        return; 
-      }
-
-      if (!text) return;
-
-      let code = text.trim();
-      const v2Index = code.indexOf('v2');
-      if (v2Index !== -1) {
-          code = code.substring(v2Index);
-      } else {
-          showStatusMessage("⚠ Falta 'v2' en el código", true);
-          return;
-      }
-
-      if (!code.includes('_')) { 
-          showStatusMessage("⚠ Código incompleto", true);
-          return; 
-      }
-
-      const cleanCode = code; 
-      const parts = cleanCode.substring(2).split('_'); 
-      const headerHex = parts[0];
-      const payload = parts[1];
-      
-      if (!headerHex || !payload) return;
-
-      try {
-          const importedColors = ['transparent'];
-          for (let i = 0; i < headerHex.length; i += 6) {
-            importedColors.push('#' + headerHex.substring(i, i+6).toLowerCase());
-          }
-
-          let bestMatchKey = null;
-          for (const [key, data] of Object.entries(PALETTES)) {
-              const paletteColors = ['transparent', ...data.colors];
-              const isMatch = importedColors.every(impColor => 
-                  paletteColors.some(sysColor => sysColor.toLowerCase() === impColor.toLowerCase())
-              );
-              if (isMatch) {
-                  bestMatchKey = key;
-                  break; 
-              }
-          }
-
-          if (bestMatchKey) {
-              setPalette(bestMatchKey);
-          } else {
-              currentColors = [...importedColors];
-              while (currentColors.length < 17) {
-                   currentColors.push('#000000'); 
-              }
-              currentKey = 'custom';
-              renderActiveColors();
-              document.querySelectorAll('.palette-btn').forEach(b => b.classList.remove('selected'));
-          }
-
-          const binaryString = atob(payload);
-          const pixelIndices = [];
-          for (let i = 0; i < binaryString.length; i++) {
-            const byte = binaryString.charCodeAt(i);
-            pixelIndices.push((byte >> 4) & 0x0F);
-            pixelIndices.push(byte & 0x0F);
-          }
-
-          cells.forEach((cell, i) => {
-            if (i < pixelIndices.length) {
-              const impIdx = pixelIndices[i];
-              if (impIdx === 0) {
-                 cell.dataset.idx = "0";
-              } else {
-                 const colorHex = importedColors[impIdx];
-                 const targetIdx = currentColors.findIndex(c => c.toLowerCase() === colorHex.toLowerCase());
-                 cell.dataset.idx = targetIdx > -1 ? targetIdx.toString() : "0";
-              }
-            } else {
-              cell.dataset.idx = "0";
-            }
-            updateVisual(cell);
-          });
-          
-          showStatusMessage("¡DIBUJO IMPORTADO!");
-
-      } catch (err) {
-          console.error("Error al procesar:", err);
-          showStatusMessage("⚠ Código corrupto", true);
+        showStatusMessage("⚠ Usa CTRL + V", true); 
       }
     }
 
