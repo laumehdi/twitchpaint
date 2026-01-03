@@ -253,10 +253,9 @@
       
       .zoom-panel { width: 60px; height: 100%; flex-direction: row; gap: 4px; } 
       
-      /* --- CORRECCIÓN CLAVE PARA MÓVIL --- */
       .colors-panel { 
-          width: auto !important; /* Reseteamos el 100% que rompe el layout */
-          flex: 1;                /* Ocupa el espacio restante */
+          width: auto !important;
+          flex: 1;                
           flex-direction: row; 
           height: 100% !important; 
       }
@@ -264,10 +263,9 @@
       .active-swatch { 
           height: 100%; 
           width: auto; 
-          flex: 1; /* Se reparten el ancho equitativamente */
+          flex: 1;
           min-width: 0; 
       } 
-      /* ----------------------------------- */
 
       .controls { align-items: center; }
       .dpad { grid-template-columns: 28px 28px 28px; grid-template-rows: 24px 24px 24px; }
@@ -303,7 +301,7 @@
         
         <div class="controls">
           <button onclick="clearCanvas()" style="background:#dc3545">Borrar</button>
-          <button onclick="pasteFromClipboard()" style="background:#0dcaf0; color: #000;">Pegar</button>
+          <button onclick="pasteFromClipboard()" style="background:#0dcaf0; color: #000;">Importar</button>
           <button onclick="generateCodeAndSave()">Generar</button>
           
           <div class="dpad">
@@ -374,8 +372,6 @@
       grid.appendChild(cell); cells.push(cell);
     }
     window.onmouseup = () => isDrawing = false;
-    
-    // Se elimina el listener global de paste para que no interfiera con el prompt
     
     function handleTouch(e) {
       const touch = e.touches[0];
@@ -523,19 +519,26 @@
         setTimeout(() => { if (out.value === msg) { out.value = ""; out.style.color = ""; } }, 1500);
     }
 
+    // --- AQUÍ ESTÁ LA LÓGICA MEJORADA CON REGEX ---
     function processImportCode(code) {
         if (!code) return;
-        code = code.trim();
-        const v2Index = code.indexOf('v2');
-        if (v2Index !== -1) { code = code.substring(v2Index); } 
-        else { showStatusMessage("⚠ Falta 'v2' en el código", true); return; }
+        
+        // Expresión Regular inteligente:
+        // Busca "v2" + [caracteres Hexadecimales] + "_" + [caracteres Base64]
+        // Ignora todo lo que esté antes o después.
+        const regex = /v2[0-9a-fA-F]+_[a-zA-Z0-9+/=]+/;
+        const match = code.match(regex);
+        
+        if (!match) {
+            showStatusMessage("⚠ No encontré código válido", true);
+            return;
+        }
 
-        if (!code.includes('_')) { showStatusMessage("⚠ Código incompleto", true); return; }
-
-        const cleanCode = code; 
+        const cleanCode = match[0]; // Usamos SOLO la parte que coincide con el patrón
         const parts = cleanCode.substring(2).split('_'); 
         const headerHex = parts[0];
         const payload = parts[1];
+        
         if (!headerHex || !payload) return;
 
         try {
@@ -578,19 +581,18 @@
                 } else { cell.dataset.idx = "0"; }
                 updateVisual(cell);
             });
+            
+            saveDrawing(); 
             showStatusMessage("¡DIBUJO IMPORTADO!");
         } catch (err) {
             console.error("Error al procesar:", err);
             showStatusMessage("⚠ Código corrupto", true);
         }
     }
+    // ----------------------------------------------
 
-    // --- FUNCIÓN ARREGLADA ---
     function pasteFromClipboard() {
-      // Abre ventana nativa para pedir el código
       const text = prompt("Pega aquí el código del dibujo:");
-      
-      // Si el usuario ingresa datos, se procesan
       if (text) {
         processImportCode(text);
       }
