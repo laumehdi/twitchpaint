@@ -2,14 +2,13 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Overlay Final Gold V7 - laumehdi</title>
+  <title>Overlay Final Gold V7 - Green & Gold Edge</title>
   <style>
     html, body { 
-      margin: 0; padding: 0; background: transparent !important; 
+      margin: 0; padding: 0; 
+      /* Fondo VERDE PURO para Chroma Key perfecto */
+      background: #00FF00 !important; 
       overflow: hidden; width: 1920px; height: 1080px;
-      /* CORRECCIÓN AQUÍ: Se movieron las fuentes de texto estándar ANTES que las fuentes emoji.
-         Esto asegura que los números y letras usen la fuente normal blanca, 
-         y solo los símbolos (como ⭐) usen las fuentes de color. */
       font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Segoe UI Emoji', 'Noto Color Emoji';
     }
     
@@ -24,7 +23,7 @@
       text-shadow: 2px 2px 0 #000;
       z-index: 99999;
       font-family: monospace;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0,0,0,0.8);
       padding: 5px;
       display: none; 
     }
@@ -51,24 +50,23 @@
       50% { transform: translateY(-30px); } 
     }
 
-    /* El salto solo ocurre si tiene la clase jumping */
     .jumping canvas {
       animation: jumpBounce 0.8s ease-in-out infinite;
     }
 
+    /* SOMBRAS PLANAS (FLAT STROKES) para subs en el carril */
     .is-sub canvas {
-      filter: drop-shadow(0 0 2px #FFD700) drop-shadow(0 0 8px #FFD700);
-      animation: glowPulse 2s infinite alternate;
+      filter: drop-shadow(4px 4px 0px #FFD700);
+      animation: flatPulse 1s infinite steps(2);
     }
     
-    /* Si es sub Y ademas está saltando (en el carril), combinamos animaciones */
     .jumping.is-sub canvas {
-       animation: jumpBounce 0.8s ease-in-out infinite, glowPulse 2s infinite alternate;
+       animation: jumpBounce 0.8s ease-in-out infinite, flatPulse 1s infinite steps(2);
     }
 
-    @keyframes glowPulse {
-      from { filter: drop-shadow(0 0 2px #FFD700) drop-shadow(0 0 6px #FFD700); }
-      to   { filter: drop-shadow(0 0 2px #FFD700) drop-shadow(0 0 12px #FFA500); }
+    @keyframes flatPulse {
+      0%   { filter: drop-shadow(4px 4px 0px #FFD700); }
+      100% { filter: drop-shadow(4px 4px 0px #FFA500); }
     }
 
     .nick { 
@@ -82,7 +80,7 @@
       text-shadow: 
         2px 0 0 #000, -2px 0 0 #000, 
         0 2px 0 #000, 0 -2px 0 #000, 
-        2px 2px 0 #000;
+        4px 4px 0 #000; 
     }
 
     .is-sub .nick {
@@ -90,17 +88,23 @@
       text-shadow: 
         2px 0 0 #000, -2px 0 0 #000, 
         0 2px 0 #000, 0 -2px 0 #000,
-        0 0 10px #FFD700, 
-        0 0 20px #FFD700;
+        4px 4px 0px #FF4500; 
     }
 
+    /* === CAMBIO AQUÍ: BORDE DORADO SÓLIDO PARA SHOWCASE === */
     .showcase {
       position: fixed !important; 
       top: 50% !important; 
       left: 50% !important;
       z-index: 99999 !important;
       animation: superDance 0.8s infinite ease-in-out !important;
-      filter: drop-shadow(0 0 25px white); 
+      /* Reemplazamos 'white' por '#FFD700' (Dorado) en los 4 bordes */
+      filter: drop-shadow(4px 0 0 #FFD700) 
+              drop-shadow(-4px 0 0 #FFD700) 
+              drop-shadow(0 4px 0 #FFD700) 
+              drop-shadow(0 -4px 0 #FFD700)
+              /* Y una sombra negra final sólida para contraste */
+              drop-shadow(8px 8px 0px black); 
     }
 
     @keyframes superDance {
@@ -120,9 +124,14 @@
   <div id="container"></div>
 
   <script>
-    // --- CONFIGURACIÓN ---
-    const CHANNEL = 'mksh'; 
-    // SE ELIMINÓ EL LIFE_TIME_MINUTES PARA QUE LOS DIBUJOS SEAN ETERNOS
+    // --- CONFIGURACIÓN DINÁMICA DE CANAL ---
+    const urlParams = new URLSearchParams(window.location.search);
+    let channelParam = urlParams.get('channel');
+    if (!channelParam && window.location.search.length > 1) {
+        channelParam = window.location.search.substring(1).replace('=', '');
+    }
+    const CHANNEL = channelParam || 'laumehdi'; 
+    console.log("Canal configurado: " + CHANNEL);
     // ---------------------
 
     const colors = ['transparent','#000000','#aa0000','#00aa00','#aa5500','#0000aa','#aa00aa','#00aaaa','#aaaaaa','#555555','#ff5555','#55ff55','#ffff55','#5555ff','#ff55ff','#55ffff','#ffffff'];
@@ -154,31 +163,19 @@
              continue;
         }
 
-        // === MODO LLUVIA INFINITA ===
         if (rainMode) {
             d.el.style.opacity = 1; 
-
-            // Caída suave vertical
             d.y += d.rainSpeed; 
-            
-            // Vaivén suave horizontal
             const sway = Math.sin((now / 800) + d.rainPhase) * 20; 
             d.x = d.rainOriginX + sway;
-
-            // Render
             d.el.style.transform = 'translate3d(' + d.x + 'px, ' + d.y + 'px, 0)';
 
-            // BUCLE
             if (d.y > 1100) {
                 d.y = -180; 
                 d.rainOriginX = Math.random() * 1800; 
             }
             continue; 
         }
-        // ============================
-
-        // --- SE ELIMINÓ EL BLOQUE DE MUERTE NATURAL ---
-        // Los dibujos ya no mueren por tiempo.
 
         if (d.dying) {
             d.vy += 0.5; 
@@ -194,7 +191,6 @@
                 continue;
             }
         } else {
-            // Movimiento Normal
             d.el.style.opacity = 1;
             d.x += d.speed;
             if (d.x > 2200) { 
@@ -218,13 +214,13 @@
       if (ws) { try { ws.close(); } catch(e){} }
       const statusEl = document.getElementById('status');
       statusEl.style.display = 'block';
-      statusEl.innerText = "CONECTANDO...";
+      statusEl.innerText = "CONECTANDO A: " + CHANNEL.toUpperCase();
       statusEl.style.color = "#ffcc00";
 
       ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
 
       ws.onopen = function() {
-        console.log("WS Conectado");
+        console.log("WS Conectado a " + CHANNEL);
         statusEl.innerText = "¡CONECTADO!";
         statusEl.style.color = "#00ff00"; 
         setTimeout(function() { statusEl.style.display = 'none'; }, 3000);
@@ -355,19 +351,15 @@
            }
         }
 
-        // 1. Configuración de SUBS
         if (isSub) {
             itemEl.classList.add('is-sub');
             if (!isTest) itemEl.classList.add('waiting');
         }
 
-        // 2. Configuración de SALTO
-        // SOLO LOS NORMALES saltan inmediatamente
         if (!isTest && !isSub) {
             itemEl.classList.add('jumping');
             setTimeout(() => { if (itemEl) itemEl.classList.remove('jumping'); }, 16000);
         }
-        // (Los subs saltarán DESPUÉS de su baile, en processQueue)
 
         if (testMode && !isTest) itemEl.classList.add('hidden');
         itemEl.appendChild(canvas);
@@ -416,7 +408,8 @@
       if (!testMode) {
         testMode = true;
         drawings.forEach(function(d) { if(!d.isTest) d.el.classList.add('hidden'); });
-        const code = "0ce_0m17081205120k210623042501220121042103210223012103230221022103220321032101230322022103210121062102210523022302210922042102120f150g170i";
+        // --- CÓDIGO ACTUALIZADO A LA VERSIÓN V2 QUE PEDISTE ---
+        const code = "v2000000008751AB52361D2B535F574F83769CC2C3C7FFCCAAFF004D00E436FFEC2729ADFFFF77A8FFF1E8_AAAAAAAAAAAAmQAAAA3QAAmZqqu8zd7uCZmqq7zM3u4AIiM0REjdMAAiY3dEQRMwAAZnd3GIVQMAAAB3cYhVUBEREQABEREQABABAAABABEAEAABAAEBAAAQEREAAQEAABAREAABAQAAEBAAEBABAAAAEAEREAEAAAAREA==";
         for (let i = 0; i < 20; i++) { createDrawing('Bot_' + i, code, (i % 3 === 0), true, (Math.random() * 1900)); }
       } else {
         testMode = false;
@@ -443,10 +436,8 @@
           drawings.forEach(function(d) { if(d.lane === current.lane && d.x < min) min = d.x; });
           current.x = min - 350;
           
-          // --- AQUÍ EL SUB EMPIEZA A SALTAR EN EL CARRIL ---
           current.el.classList.add('jumping');
           setTimeout(() => { if (current.el) current.el.classList.remove('jumping'); }, 16000); 
-          // ------------------------------------------------
 
           isShowcaseBusy = false;
           processQueue();
