@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Overlay Alpha Gold V10 - Premium No-Lag</title>
+  <title>Overlay Alpha Gold V11 - Aura Edition</title>
   <style>
     html, body { 
       margin: 0; padding: 0; 
@@ -43,9 +43,11 @@
       width: 150px; height: 150px; 
       background: transparent; 
       transition: transform 0.3s; 
+      /* Importante: Mantiene el pixel art nítido dentro del canvas */
+      z-index: 2; 
     }
 
-    /* Animación de salto estándar */
+    /* Animación normal de salto */
     @keyframes jumpBounce {
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-30px); } 
@@ -55,11 +57,12 @@
       animation: jumpBounce 0.8s ease-in-out infinite;
     }
 
-    /* Subs en el carril: Sombra simple para no cargar */
+    /* === SUBS EN CARRIL NORMAL === */
     .is-sub canvas {
-      filter: drop-shadow(4px 4px 0px #FFD700) drop-shadow(-2px -2px 0px #000);
+      /* Un filtro sutil para que brillen un poco sin sombras pesadas */
+      filter: brightness(1.2) sepia(0.3);
     }
-
+    
     .nick { 
       color: white; 
       font-weight: 900;
@@ -68,54 +71,61 @@
       text-align: center;
       margin-top: 2px;
       white-space: nowrap;
-      text-shadow: 2px 2px 0 #000, -1px -1px 0 #000; 
+      text-shadow: 2px 2px 0 #000; 
+      z-index: 3;
     }
 
     .is-sub .nick {
       color: #FFD700;
-      text-shadow: 2px 2px 0 #000;
     }
 
-    /* === SHOWCASE: EFECTO 3D METALICO (SIN BLUR) === 
-       Usamos múltiples drop-shadows duros para crear un gradiente falso.
-       Esto simula volumen sin matar la CPU. */
+    /* === SHOWCASE: LA SOLUCIÓN ELEGANTE (Aura + Estatua) === */
     .showcase {
       position: fixed !important; 
       top: 50% !important; 
       left: 50% !important;
       z-index: 99999 !important;
+      will-change: transform;
       
-      /* Animación compuesta: Baile + Brillo Metálico */
-      animation: 
-        superDance 0.8s infinite ease-in-out,
-        metallicShine 2s infinite linear !important;
-      
-      will-change: transform, filter;
+      /* Animación principal: el baile */
+      animation: superDance 0.8s infinite ease-in-out !important;
     }
 
-    /* Esta animación simula que la luz pasa por el borde dorado */
-    @keyframes metallicShine {
-      0% {
-        filter: 
-          drop-shadow(3px 3px 0px #FFD700)   /* Oro Medio */
-          drop-shadow(6px 6px 0px #DAA520)   /* Oro Oscuro */
-          drop-shadow(9px 9px 0px #8B4513)   /* Cobre/Sombra */
-          drop-shadow(12px 12px 0px #000000); /* Borde Final */
-      }
-      50% {
-        filter: 
-          drop-shadow(3px 3px 0px #FFFFE0)   /* Brillo casi blanco */
-          drop-shadow(6px 6px 0px #FFD700)   /* Oro Puro */
-          drop-shadow(9px 9px 0px #DAA520)   /* Oro Oscuro */
-          drop-shadow(12px 12px 0px #000000); 
-      }
-      100% {
-        filter: 
-          drop-shadow(3px 3px 0px #FFD700)
-          drop-shadow(6px 6px 0px #DAA520)
-          drop-shadow(9px 9px 0px #8B4513)
-          drop-shadow(12px 12px 0px #000000);
-      }
+    /* 1. EL AURA DE LUZ (Fondo suave sin lag) */
+    .showcase::before {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 250px; height: 250px;
+      transform: translate(-50%, -60%); /* Centrado detrás del dibujo */
+      z-index: 1; /* Detrás del canvas */
+      border-radius: 50%;
+      
+      /* ESTO ES LA MAGIA: Un degradado radial. 
+         Es matemáticamente muy fácil para la CPU pero se ve SUAVE (no pixelado). */
+      background: radial-gradient(circle, rgba(255, 215, 0, 0.8) 0%, rgba(255, 165, 0, 0.4) 40%, transparent 70%);
+      
+      /* Animación del aura pulsando */
+      animation: auraPulse 1.5s infinite alternate ease-in-out;
+    }
+
+    /* 2. EL EFECTO ESTATUA DE ORO (Sobre el dibujo) */
+    .showcase canvas {
+      /* Convertimos el dibujo en ORO PURO usando filtros de color. 
+         Sepia: da el tono marrón/dorado.
+         Saturate: intensifica el amarillo.
+         Brightness: le da luz. 
+         Drop-shadow pequeño: solo para separarlo del fondo, muy ligero. */
+      filter: sepia(100%) saturate(300%) hue-rotate(5deg) brightness(1.1) drop-shadow(0 0 2px rgba(0,0,0,0.8));
+      
+      /* Animación de brillo interno */
+      animation: goldFlash 2s infinite linear;
+    }
+    
+    .showcase .nick {
+       font-size: 30px !important;
+       text-shadow: 3px 3px 0 #000, 0 0 10px rgba(0,0,0,0.5);
+       margin-top: 10px;
     }
 
     @keyframes superDance {
@@ -124,6 +134,17 @@
       50%  { transform: translate(-50%, -50%) scale(4.5) rotate(0deg) translateY(-15px); } 
       75%  { transform: translate(-50%, -50%) scale(4.8) rotate(5deg); }
       100% { transform: translate(-50%, -50%) scale(4.5) rotate(0deg); }
+    }
+
+    @keyframes auraPulse {
+      0% { transform: translate(-50%, -60%) scale(1); opacity: 0.7; }
+      100% { transform: translate(-50%, -60%) scale(1.2); opacity: 1; }
+    }
+
+    @keyframes goldFlash {
+      0% { filter: sepia(100%) saturate(300%) hue-rotate(5deg) brightness(1); }
+      50% { filter: sepia(100%) saturate(400%) hue-rotate(0deg) brightness(1.4); } /* Brillo intenso */
+      100% { filter: sepia(100%) saturate(300%) hue-rotate(5deg) brightness(1); }
     }
 
     .hidden { display: none !important; }
