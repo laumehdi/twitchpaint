@@ -2,11 +2,10 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Overlay Alpha Gold V8 - Flathub Edition</title>
+  <title>Overlay Alpha Gold V9 - CPU Optimized</title>
   <style>
     html, body { 
       margin: 0; padding: 0; 
-      /* Transparencia total para OBS Browser */
       background: transparent !important; 
       overflow: hidden; width: 1920px; height: 1080px;
       font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -36,7 +35,7 @@
       flex-direction: column;
       align-items: center;
       width: 150px;
-      will-change: transform; 
+      will-change: transform; /* Ayuda al navegador a optimizar movimiento */
     }
 
     canvas { 
@@ -56,18 +55,15 @@
       animation: jumpBounce 0.8s ease-in-out infinite;
     }
 
-    /* Borde dorado suave para subs en el carril */
+    /* === OPTIMIZACIÓN 1: SUBS EN CARRIL === 
+       Eliminado el blur suave. Ahora usa sombras sólidas (Hard Shadows).
+       Esto carga mucho menos la CPU. */
     .is-sub canvas {
-      filter: drop-shadow(3px 3px 0px #FFD700) drop-shadow(-1px -1px 0px #FFD700);
-      animation: goldPulse 1.5s infinite alternate ease-in-out;
+      /* Sombra dura dorada en lugar de resplandor difuso */
+      filter: drop-shadow(4px 4px 0px #FFD700) drop-shadow(-2px -2px 0px #000);
     }
 
-    @keyframes goldPulse {
-      0% { filter: drop-shadow(4px 4px 2px #FFD700); }
-      100% { filter: drop-shadow(4px 4px 8px #FFA500); }
-    }
-
-    /* Nicks con mejor legibilidad */
+    /* === OPTIMIZACIÓN 2: Nicks === */
     .nick { 
       color: white; 
       font-weight: 900;
@@ -76,36 +72,40 @@
       text-align: center;
       margin-top: 2px;
       white-space: nowrap;
-      text-shadow: 
-        2px 2px 0 #000, -2px -2px 0 #000, 
-        2px -2px 0 #000, -2px 2px 0 #000,
-        0 4px 5px rgba(0,0,0,0.5); 
+      /* Sombra de texto simple, sin blur excesivo */
+      text-shadow: 2px 2px 0 #000, -1px -1px 0 #000; 
     }
 
     .is-sub .nick {
       color: #FFD700;
-      text-shadow: 2px 2px 0 #000, 0 0 10px rgba(255, 215, 0, 0.5);
+      text-shadow: 2px 2px 0 #000;
     }
 
-    /* === SHOWCASE: EFECTO DORADO BRILLANTE CON GRADIENTE === */
+    /* === SHOWCASE: OPTIMIZACIÓN CRÍTICA (CPU FRIENDLY) === */
     .showcase {
       position: fixed !important; 
       top: 50% !important; 
       left: 50% !important;
       z-index: 99999 !important;
       animation: superDance 0.8s infinite ease-in-out !important;
-      /* Capas de brillo metálico */
+      
+      /* IMPORTANTE: will-change avisa al navegador que esto cambiará mucho */
+      will-change: transform;
+
+      /* CAMBIO CLAVE:
+         Quitamos drop-shadow(0 0 10px...) y (0 0 20px...).
+         El desenfoque (blur) mata la CPU sin aceleración de hardware.
+         Usamos sombras sólidas que dan efecto "Pop-up" estilo retro. */
       filter: 
-        drop-shadow(0 0 10px #FFD700) 
-        drop-shadow(0 0 20px #FFA500)
-        drop-shadow(4px 4px 0px rgba(0,0,0,0.8));
+        drop-shadow(6px 6px 0px #000000) 
+        drop-shadow(-4px -4px 0px #FFD700); 
     }
 
     @keyframes superDance {
       0%   { transform: translate(-50%, -50%) scale(4.5) rotate(0deg); }
-      25%  { transform: translate(-50%, -50%) scale(4.8) rotate(-8deg); }
-      50%  { transform: translate(-50%, -50%) scale(4.5) rotate(0deg) translateY(-25px); } 
-      75%  { transform: translate(-50%, -50%) scale(4.8) rotate(8deg); }
+      25%  { transform: translate(-50%, -50%) scale(4.8) rotate(-5deg); } /* Reduje la rotación para suavizar */
+      50%  { transform: translate(-50%, -50%) scale(4.5) rotate(0deg) translateY(-15px); } 
+      75%  { transform: translate(-50%, -50%) scale(4.8) rotate(5deg); }
       100% { transform: translate(-50%, -50%) scale(4.5) rotate(0deg); }
     }
 
@@ -136,7 +136,7 @@
     let reconnectInterval = null;
     let activeCodes = new Set(); 
 
-    const LANES = [10, 40, 70, 100]; // Ajuste leve de altura
+    const LANES = [10, 40, 70, 100]; 
     const SPEEDS = [2, 3.5, 2.5, 4.5];
     const Z_INDEXES = [5, 20, 10, 30];
 
@@ -144,7 +144,9 @@
       const now = Date.now();
       for (let i = drawings.length - 1; i >= 0; i--) {
         let d = drawings[i];
+        // Si está en showcase, NO lo movemos vía JS aquí, dejamos que CSS lo maneje para no sobrecargar
         if (d.el.classList.contains('showcase') || d.el.classList.contains('hidden')) continue;
+        
         if (d.el.classList.contains('waiting')) {
              d.el.style.transform = 'translate3d(-500px, -500px, 0)';
              continue;
