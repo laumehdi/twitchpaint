@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Overlay Alpha Gold V12 - True Colors No-Lag</title>
+  <title>Overlay Alpha Gold V13 - Clean & Fast</title>
   <style>
     html, body { 
       margin: 0; padding: 0; 
@@ -43,7 +43,6 @@
       width: 150px; height: 150px; 
       background: transparent; 
       transition: transform 0.3s; 
-      /* Importante: Mantiene el pixel art nítido dentro del canvas */
       z-index: 2; 
     }
 
@@ -59,8 +58,9 @@
 
     /* === SUBS EN CARRIL NORMAL === */
     .is-sub canvas {
-       /* Sombra sólida sutil para los que caminan */
-       filter: drop-shadow(2px 2px 0px #DAA520);
+       /* CAMBIO 1: Eliminada la sombra pixelada.
+          Solo un poco de brillo extra para que se vea "nuevo" y limpio. */
+       filter: brightness(1.15);
     }
     
     .nick { 
@@ -79,47 +79,34 @@
       color: #FFD700;
     }
 
-    /* === SHOWCASE CENTRAL: COLORES REALES + MARCO DE ORO === */
+    /* === SHOWCASE CENTRAL: LIMPIO Y CON AURA === */
     .showcase {
       position: fixed !important; 
       top: 50% !important; 
       left: 50% !important;
       z-index: 99999 !important;
       will-change: transform;
-      
-      /* Animación principal: el baile */
       animation: superDance 0.8s infinite ease-in-out !important;
     }
 
-    /* 1. EL AURA DE LUZ (Fondo suave) */
+    /* 1. EL AURA DE LUZ (Fondo suave) - ESTO SE MANTIENE */
     .showcase::before {
       content: '';
       position: absolute;
       top: 50%; left: 50%;
-      width: 280px; height: 280px; /* Un poco más grande el aura */
+      width: 280px; height: 280px; 
       transform: translate(-50%, -60%); 
       z-index: 1; /* Detrás del canvas */
       border-radius: 50%;
-      /* Degradado más brillante en el centro para que resalten los colores */
       background: radial-gradient(circle, rgba(255, 255, 224, 0.9) 0%, rgba(255, 215, 0, 0.5) 40%, transparent 70%);
       animation: auraPulse 1.5s infinite alternate ease-in-out;
     }
 
-    /* 2. EL DIBUJO CENTRAL (Colores Originales + Borde Duro) */
+    /* 2. EL DIBUJO CENTRAL */
     .showcase canvas {
-      /* ¡AQUI ESTA EL CAMBIO! 
-         Quitamos sepia y saturate. Los colores son los originales.
-         Usamos 4 sombras con 0px de blur para crear un marco sólido. 
-         Esto es muy ligero para la CPU. */
-      filter: 
-        drop-shadow(3px 0px 0px #FFD700)   /* Derecha */
-        drop-shadow(-3px 0px 0px #FFD700)  /* Izquierda */
-        drop-shadow(0px 3px 0px #FFD700)   /* Abajo */
-        drop-shadow(0px -3px 0px #FFD700)  /* Arriba */
-        brightness(1.1); /* Un pelín más de brillo para que destaque */
-      
-      /* Animación del borde destellando */
-      animation: borderFlash 2s infinite linear;
+      /* CAMBIO 2: Eliminados todos los drop-shadow.
+         Ahora es el dibujo limpio, colores originales, sobre el aura de luz. */
+      filter: brightness(1.1); 
     }
     
     .showcase .nick {
@@ -139,20 +126,6 @@
     @keyframes auraPulse {
       0% { transform: translate(-50%, -60%) scale(1); opacity: 0.7; }
       100% { transform: translate(-50%, -60%) scale(1.15); opacity: 1; }
-    }
-
-    /* Nueva animación: Hace que el borde dorado brille más intensamente */
-    @keyframes borderFlash {
-      0%, 100% { 
-        filter: 
-        drop-shadow(3px 0px 0px #FFD700) drop-shadow(-3px 0px 0px #FFD700)
-        drop-shadow(0px 3px 0px #FFD700) drop-shadow(0px -3px 0px #FFD700) brightness(1.1);
-      }
-      50% { 
-         filter: 
-        drop-shadow(3px 0px 0px #FFFFE0) drop-shadow(-3px 0px 0px #FFFFE0)
-        drop-shadow(0px 3px 0px #FFFFE0) drop-shadow(0px -3px 0px #FFFFE0) brightness(1.3);
-      }
     }
 
     .hidden { display: none !important; }
