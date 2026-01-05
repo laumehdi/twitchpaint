@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Overlay Alpha Gold V13 - Clean & Fast</title>
+  <title>Overlay Alpha Gold V14 - Speed Control</title>
   <style>
     html, body { 
       margin: 0; padding: 0; 
@@ -58,8 +58,6 @@
 
     /* === SUBS EN CARRIL NORMAL === */
     .is-sub canvas {
-       /* CAMBIO 1: Eliminada la sombra pixelada.
-          Solo un poco de brillo extra para que se vea "nuevo" y limpio. */
        filter: brightness(1.15);
     }
     
@@ -79,7 +77,7 @@
       color: #FFD700;
     }
 
-    /* === SHOWCASE CENTRAL: LIMPIO Y CON AURA === */
+    /* === SHOWCASE CENTRAL === */
     .showcase {
       position: fixed !important; 
       top: 50% !important; 
@@ -89,23 +87,19 @@
       animation: superDance 0.8s infinite ease-in-out !important;
     }
 
-    /* 1. EL AURA DE LUZ (Fondo suave) - ESTO SE MANTIENE */
     .showcase::before {
       content: '';
       position: absolute;
       top: 50%; left: 50%;
       width: 280px; height: 280px; 
       transform: translate(-50%, -60%); 
-      z-index: 1; /* Detrás del canvas */
+      z-index: 1; 
       border-radius: 50%;
       background: radial-gradient(circle, rgba(255, 255, 224, 0.9) 0%, rgba(255, 215, 0, 0.5) 40%, transparent 70%);
       animation: auraPulse 1.5s infinite alternate ease-in-out;
     }
 
-    /* 2. EL DIBUJO CENTRAL */
     .showcase canvas {
-      /* CAMBIO 2: Eliminados todos los drop-shadow.
-         Ahora es el dibujo limpio, colores originales, sobre el aura de luz. */
       filter: brightness(1.1); 
     }
     
@@ -155,8 +149,13 @@
     let reconnectInterval = null;
     let activeCodes = new Set(); 
 
+    // === MODIFICACIÓN DE VELOCIDAD ===
+    // 0.75 es la velocidad 1 (por defecto, un poco más lento).
+    // 1.0 será la velocidad 2 (la original).
+    let globalSpeedMultiplier = 0.75; 
+
     const LANES = [10, 40, 70, 100]; 
-    const SPEEDS = [2, 3.5, 2.5, 4.5];
+    const SPEEDS = [2, 3.5, 2.5, 4.5]; // Estos valores base ahora se multiplican por globalSpeedMultiplier
     const Z_INDEXES = [5, 20, 10, 30];
 
     function animate() {
@@ -185,7 +184,9 @@
             if (d.y > 1200) { d.el.remove(); activeCodes.delete(d.code); drawings.splice(i, 1); continue; }
         } else {
             d.el.style.opacity = 1;
-            d.x += d.speed;
+            // APLICAMOS EL MULTIPLICADOR DE VELOCIDAD AQUÍ
+            d.x += (d.speed * globalSpeedMultiplier);
+            
             if (d.x > 2200) { 
               let minX = -200;
               drawings.forEach(other => { if (other.lane === d.lane && other.x < minX) minX = other.x; });
@@ -205,7 +206,7 @@
       statusEl.innerText = "CONECTANDO A: " + CHANNEL.toUpperCase();
       ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
       ws.onopen = () => {
-        statusEl.innerText = "¡CONECTADO!";
+        statusEl.innerText = "¡CONECTADO! VELOCIDAD: " + (globalSpeedMultiplier === 1 ? "2" : "1");
         setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
         ws.send('CAP REQ :twitch.tv/tags');
         ws.send('PASS oauth:none');
@@ -236,6 +237,15 @@
           removeDrawing(isAdmin ? target : user);
         } else if (msg === '!testpixel' && isAdmin) { toggleTest(); }
         else if (msg === '!fin' && isAdmin) { toggleRain(); }
+        // NUEVO COMANDO DE VELOCIDAD
+        else if (msg.indexOf('!velocidad ') === 0 && isAdmin) {
+             const level = msg.split(' ')[1];
+             if (level === '1') {
+                 globalSpeedMultiplier = 0.75; // Por defecto
+             } else if (level === '2') {
+                 globalSpeedMultiplier = 1.0; // Velocidad rápida (original)
+             }
+        }
       }
     }
 
@@ -298,6 +308,7 @@
         itemEl.style.zIndex = Z_INDEXES[laneIdx]; 
         document.getElementById('container').appendChild(itemEl);
 
+        // Se mantiene la lógica original, la velocidad se ajusta en el animate loop dinámicamente
         let obj = { el: itemEl, user, code: fullCode, lane: laneIdx, speed: SPEEDS[laneIdx], y: LANES[laneIdx], x: forceX || -400, isTest, dying: false, rainOriginX: 0, rainSpeed: 1, rainPhase: 0 };
         if (forceX === undefined) {
           let min = -200;
