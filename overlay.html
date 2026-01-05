@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Overlay Alpha Gold V9 - CPU Optimized</title>
+  <title>Overlay Alpha Gold V10 - Premium No-Lag</title>
   <style>
     html, body { 
       margin: 0; padding: 0; 
@@ -35,7 +35,7 @@
       flex-direction: column;
       align-items: center;
       width: 150px;
-      will-change: transform; /* Ayuda al navegador a optimizar movimiento */
+      will-change: transform; 
     }
 
     canvas { 
@@ -45,7 +45,7 @@
       transition: transform 0.3s; 
     }
 
-    /* Animación de salto */
+    /* Animación de salto estándar */
     @keyframes jumpBounce {
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-30px); } 
@@ -55,15 +55,11 @@
       animation: jumpBounce 0.8s ease-in-out infinite;
     }
 
-    /* === OPTIMIZACIÓN 1: SUBS EN CARRIL === 
-       Eliminado el blur suave. Ahora usa sombras sólidas (Hard Shadows).
-       Esto carga mucho menos la CPU. */
+    /* Subs en el carril: Sombra simple para no cargar */
     .is-sub canvas {
-      /* Sombra dura dorada en lugar de resplandor difuso */
       filter: drop-shadow(4px 4px 0px #FFD700) drop-shadow(-2px -2px 0px #000);
     }
 
-    /* === OPTIMIZACIÓN 2: Nicks === */
     .nick { 
       color: white; 
       font-weight: 900;
@@ -72,7 +68,6 @@
       text-align: center;
       margin-top: 2px;
       white-space: nowrap;
-      /* Sombra de texto simple, sin blur excesivo */
       text-shadow: 2px 2px 0 #000, -1px -1px 0 #000; 
     }
 
@@ -81,29 +76,51 @@
       text-shadow: 2px 2px 0 #000;
     }
 
-    /* === SHOWCASE: OPTIMIZACIÓN CRÍTICA (CPU FRIENDLY) === */
+    /* === SHOWCASE: EFECTO 3D METALICO (SIN BLUR) === 
+       Usamos múltiples drop-shadows duros para crear un gradiente falso.
+       Esto simula volumen sin matar la CPU. */
     .showcase {
       position: fixed !important; 
       top: 50% !important; 
       left: 50% !important;
       z-index: 99999 !important;
-      animation: superDance 0.8s infinite ease-in-out !important;
       
-      /* IMPORTANTE: will-change avisa al navegador que esto cambiará mucho */
-      will-change: transform;
+      /* Animación compuesta: Baile + Brillo Metálico */
+      animation: 
+        superDance 0.8s infinite ease-in-out,
+        metallicShine 2s infinite linear !important;
+      
+      will-change: transform, filter;
+    }
 
-      /* CAMBIO CLAVE:
-         Quitamos drop-shadow(0 0 10px...) y (0 0 20px...).
-         El desenfoque (blur) mata la CPU sin aceleración de hardware.
-         Usamos sombras sólidas que dan efecto "Pop-up" estilo retro. */
-      filter: 
-        drop-shadow(6px 6px 0px #000000) 
-        drop-shadow(-4px -4px 0px #FFD700); 
+    /* Esta animación simula que la luz pasa por el borde dorado */
+    @keyframes metallicShine {
+      0% {
+        filter: 
+          drop-shadow(3px 3px 0px #FFD700)   /* Oro Medio */
+          drop-shadow(6px 6px 0px #DAA520)   /* Oro Oscuro */
+          drop-shadow(9px 9px 0px #8B4513)   /* Cobre/Sombra */
+          drop-shadow(12px 12px 0px #000000); /* Borde Final */
+      }
+      50% {
+        filter: 
+          drop-shadow(3px 3px 0px #FFFFE0)   /* Brillo casi blanco */
+          drop-shadow(6px 6px 0px #FFD700)   /* Oro Puro */
+          drop-shadow(9px 9px 0px #DAA520)   /* Oro Oscuro */
+          drop-shadow(12px 12px 0px #000000); 
+      }
+      100% {
+        filter: 
+          drop-shadow(3px 3px 0px #FFD700)
+          drop-shadow(6px 6px 0px #DAA520)
+          drop-shadow(9px 9px 0px #8B4513)
+          drop-shadow(12px 12px 0px #000000);
+      }
     }
 
     @keyframes superDance {
       0%   { transform: translate(-50%, -50%) scale(4.5) rotate(0deg); }
-      25%  { transform: translate(-50%, -50%) scale(4.8) rotate(-5deg); } /* Reduje la rotación para suavizar */
+      25%  { transform: translate(-50%, -50%) scale(4.8) rotate(-5deg); } 
       50%  { transform: translate(-50%, -50%) scale(4.5) rotate(0deg) translateY(-15px); } 
       75%  { transform: translate(-50%, -50%) scale(4.8) rotate(5deg); }
       100% { transform: translate(-50%, -50%) scale(4.5) rotate(0deg); }
@@ -144,7 +161,6 @@
       const now = Date.now();
       for (let i = drawings.length - 1; i >= 0; i--) {
         let d = drawings[i];
-        // Si está en showcase, NO lo movemos vía JS aquí, dejamos que CSS lo maneje para no sobrecargar
         if (d.el.classList.contains('showcase') || d.el.classList.contains('hidden')) continue;
         
         if (d.el.classList.contains('waiting')) {
