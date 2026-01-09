@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Overlay Alpha Gold V14 - Speed Control</title>
+  <title>Overlay Alpha Gold V14 - Speed Control (Fix Base64)</title>
   <style>
     html, body { 
       margin: 0; padding: 0; 
@@ -155,7 +155,7 @@
     let globalSpeedMultiplier = 0.60; 
 
     const LANES = [10, 40, 70, 100]; 
-    const SPEEDS = [2, 3.5, 2.5, 4.5]; // Estos valores base ahora se multiplican por globalSpeedMultiplier
+    const SPEEDS = [2, 3.5, 2.5, 4.5]; 
     const Z_INDEXES = [5, 20, 10, 30];
 
     function animate() {
@@ -237,20 +237,27 @@
           removeDrawing(isAdmin ? target : user);
         } else if (msg === '!testpixel' && isAdmin) { toggleTest(); }
         else if (msg === '!fin' && isAdmin) { toggleRain(); }
-        // NUEVO COMANDO DE VELOCIDAD
         else if (msg.indexOf('!velocidad ') === 0 && isAdmin) {
              const level = msg.split(' ')[1];
              if (level === '1') {
-                 globalSpeedMultiplier = 0.75; // Por defecto
+                 globalSpeedMultiplier = 0.75; 
              } else if (level === '2') {
-                 globalSpeedMultiplier = 1.0; // Velocidad rápida (original)
+                 globalSpeedMultiplier = 1.0; 
              }
         }
       }
     }
 
     function createDrawing(user, fullCode, isSub, isTest, forceX) {
+      // === FIX BASE64: BORRAMOS EL RELLENO "=" ===
+      // Esto hace que "Codigo=" sea igual a "Codigo", evitando duplicados.
+      if (fullCode) {
+          fullCode = fullCode.replace(/=+$/, '');
+      }
+      
+      // Chequeo original: Si el código (ya limpio) existe, no lo dibuja.
       if (!isTest && activeCodes.has(fullCode)) return;
+      
       try {
         let pixelData = [], finalPalette = [];
         const isV2 = fullCode.indexOf('v2') === 0; 
@@ -308,7 +315,6 @@
         itemEl.style.zIndex = Z_INDEXES[laneIdx]; 
         document.getElementById('container').appendChild(itemEl);
 
-        // Se mantiene la lógica original, la velocidad se ajusta en el animate loop dinámicamente
         let obj = { el: itemEl, user, code: fullCode, lane: laneIdx, speed: SPEEDS[laneIdx], y: LANES[laneIdx], x: forceX || -400, isTest, dying: false, rainOriginX: 0, rainSpeed: 1, rainPhase: 0 };
         if (forceX === undefined) {
           let min = -200;
